@@ -15,6 +15,13 @@ app.use(cors({
 }))
 
 //Route imports
+const user=require("./routes/userRoutes")
+const project=require("./routes/projectRoutes")
+const other=require("./routes/otherRoutes")
+
+app.use("/api",user)
+app.use("/api",project)
+app.use("/api",other)
 
 //Middleware for errors
 app.use(errorMiddleware);

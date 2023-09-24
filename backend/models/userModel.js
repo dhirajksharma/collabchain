@@ -18,6 +18,10 @@ const userSchema= new mongoose.Schema({
         unique:true,
         validate:[validator.isEmail, "Please enter valid email"]
     },
+    verifyEmailStatus:{
+        type:Boolean,
+        default:false
+    },
     phone:{
         type:Number,
     },
@@ -83,6 +87,8 @@ const userSchema= new mongoose.Schema({
 
     resetPasswordToken:String,
     resetPasswordExpire:Date,
+    verifyEmailToken:String,
+    verifyEmailExpire:Date,
 })
 
 
@@ -116,4 +122,13 @@ userSchema.methods.getResetPasswordToken=function(){
     return resetToken;
 }
 
+//Generating email verification token
+userSchema.methods.getResetPasswordToken=function(){
+    const verificationToken=crypto.randomBytes(5).toString("hex");
+
+    this.verifyEmailToken=crypto.createHash("sha256").update(verificationToken).digest("hex");
+    this.verifyEmailExpire=Date.now()+5*60*1000;
+
+    return verificationToken;
+}
 module.exports=mongoose.model("User",userSchema);
