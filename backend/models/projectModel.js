@@ -2,14 +2,14 @@ const mongoose=require("mongoose");
 
 const projectSchema= new mongoose.Schema({
     title:{
-        type:string,
+        type:String,
     },
     domain:{
         type: mongoose.Schema.ObjectId,
         ref:"Domain",
     },
     description:{
-        type:string,
+        type:String,
     },
     startDate:{
         type:Date,
@@ -89,13 +89,13 @@ const projectSchema= new mongoose.Schema({
                 type:Number
             },
             title:{
-                type:string,
+                type:String,
             },
             description:{
-                type:string,
+                type:String,
             },
             priority:{
-                type:string,
+                type:String,
             },
             dueDate:{
                 type:Date
@@ -117,11 +117,11 @@ const projectSchema= new mongoose.Schema({
             mentorProvidedDocuments:[
                 {
                     public_id:{
-                        type:string,
+                        type:String,
                         required:true,
                     },
                     url:{
-                        type:string,
+                        type:String,
                         required:true,
                     }
                 },
@@ -129,11 +129,11 @@ const projectSchema= new mongoose.Schema({
             menteeUploadedDocuments:[
                 {
                     public_id:{
-                        type:string,
+                        type:String,
                         required:true,
                     },
                     url:{
-                        type:string,
+                        type:String,
                         required:true,
                     },
                     uploadDate:{

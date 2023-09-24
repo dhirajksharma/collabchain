@@ -35,11 +35,11 @@ const userSchema= new mongoose.Schema({
     },
     avatar:{
         public_id:{
-            type:string,
+            type:String,
             required:true,
         },
         url:{
-            type:string,
+            type:String,
             required:true,
         }
     },
@@ -55,16 +55,16 @@ const userSchema= new mongoose.Schema({
             ref:"Organization",
         },
         designation:{
-            type:string
+            type:String
         }
     },
     resume:{
         public_id:{
-            type:string,
+            type:String,
             required:true,
         },
         url:{
-            type:string,
+            type:String,
             required:true,
         }
     },
