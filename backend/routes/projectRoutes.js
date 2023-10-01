@@ -3,7 +3,7 @@ const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
 const router=express.Router();
 
 router.route("/projects")
-    .get() //users gets all the projects on public dashboard
+    .get() //users gets all the projects on public feed
     .post() //mentor creates a new project
 
 router.route("/projects/:id")
