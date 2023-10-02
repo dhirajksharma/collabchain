@@ -1,9 +1,11 @@
 ## Package Manager and Commands
 
-The project is setup using `yarn package manager`
+The project is setup using `yarn package manager version 1.22.19`
+
 Here are the two commands we are using
+- `yarn install` to install the dependencies post cloning
 - `yarn dev` to run the server in development mode using nodemon
-- `yarn start` to run the server in production
+- `yarn start` to run the server in production mode using node
 
 ## Environment Variables
 
