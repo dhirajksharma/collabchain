@@ -54,7 +54,7 @@ contract CollabChainTaskLog {
     function createTask(bytes32 taskId) public onlyMentor {
         tasks[taskId] = Task({
             isComplete: false,
-            verificationKey: generateKey();
+            verificationKey: generateKey()
         });
         emit TaskCreated(taskId);
     }
