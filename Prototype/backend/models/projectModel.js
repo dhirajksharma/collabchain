@@ -16,6 +16,7 @@ const projectSchema= new mongoose.Schema({
     },
     endDate:{
         type:Date,
+        default: new Date("2099-12-12")
     },
     ratings:{
         type:Number,
@@ -81,12 +82,15 @@ const projectSchema= new mongoose.Schema({
             name:{
                 type:String,
             },
+            assignedTaskIds:{
+                type:[String],
+            }
         }
     ],
     tasks:[
         {
             id:{
-                type:Number
+                type:String,
             },
             title:{
                 type:String,

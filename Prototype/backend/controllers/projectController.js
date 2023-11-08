@@ -8,17 +8,9 @@ const Project = require('../models/projectModels');
 const User = require('../models/userModels');
 const Task = require('../models/task');
 
-// Middleware to check user type (public, mentor, mentee)
-function checkUserType(req, res, next) {
-  // Implement your logic here to determine the user type based on authentication or other factors
-  // For simplicity, let's assume user type is determined and stored in req.userType
-  req.userType = 'public'; // Example: 'public', 'mentor', 'mentee'
-  next();
-}
-
 // Get all projects on public feed
 exports.getAllProjects = catchAsyncErrors(async (req, res) => {
-  const publicProjects = await Project.find({ visibility: 'public' });
+  const publicProjects = await Project.find({ endDate: {$lt: new Date()} });
   res.json(publicProjects);
 });
 
@@ -28,25 +20,19 @@ exports.createProject = catchAsyncErrors(async (req, res) => {
     return res.status(403).json({ message: 'Only mentors can create projects.' });
   }
 
-  const { title, description, visibility } = req.body;
-  const mentorId = req.user.id; // Assuming you have mentor authentication
+  const mentor = req.user.id; // Assuming you have mentor authentication
 
-  const project = await Project.create({ title, description, visibility, mentorId });
+  const project = await Project.create({ ...req.body, mentor });
   res.status(201).json(project);
 });
 
 // Users get project details (some details hidden based on user type: public, mentor, mentee)
 exports.getProjectDetails = catchAsyncErrors(async (req, res) => {
-  const projectId = req.params.id;
+  const projectId = req.params.projectid;
   const project = await Project.findById(projectId);
 
   if (!project) {
     return res.status(404).json({ message: 'Project not found.' });
-  }
-
-  if (req.userType !== 'mentor' && req.userType !== 'mentee') {
-    // For public users, hide some details (e.g., mentor's ID)
-    project.mentorId = undefined;
   }
 
   res.json(project);
@@ -58,12 +44,12 @@ exports.editProject = catchAsyncErrors(async (req, res) => {
     return res.status(403).json({ message: 'Only mentors can edit projects.' });
   }
 
-  const projectId = req.params.id;
+  const projectId = req.params.projectid;
   const { title, description, visibility } = req.body;
 
   const project = await Project.findByIdAndUpdate(
     projectId,
-    { title, description, visibility },
+    { ...req.body },
     { new: true }
   );
 
@@ -76,7 +62,7 @@ exports.editProject = catchAsyncErrors(async (req, res) => {
 
 // Users applying to a project
 exports.applyToProject = catchAsyncErrors(async (req, res) => {
-  const projectId = req.params.id;
+  const projectId = req.params.projectid;
   const project = await Project.findById(projectId);
 
   if (!project) {
@@ -84,8 +70,7 @@ exports.applyToProject = catchAsyncErrors(async (req, res) => {
   }
 
   // Implement your application logic here (e.g., add user to project's applicants list)
-  // For simplicity, let's assume successful application
-  project.applicants.push(req.user.id); // Assuming you have user authentication
+  project.mentesApplication.push(req.body);
   await project.save();
 
   res.status(200).json({ message: 'Application successful.' });
@@ -93,20 +78,103 @@ exports.applyToProject = catchAsyncErrors(async (req, res) => {
 
 // Users withdrawing their application
 exports.withdrawApplication = catchAsyncErrors(async (req, res) => {
-  const projectId = req.params.id;
+  const projectId = req.params.projectid;
   const project = await Project.findById(projectId);
 
   if (!project) {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-  // Implement your withdrawal logic here (e.g., remove user from project's applicants list)
-  // For simplicity, let's assume successful withdrawal
-  project.applicants = project.applicants.filter((applicantId) => applicantId !== req.user.id);
+  project.menteesApplication = project.menteesApplication.filter((application) => application.userId !== req.user.id);
   await project.save();
 
   res.status(200).json({ message: 'Withdrawal successful.' });
 });
+
+// Mentor updates mentee status
+exports.updateMenteeStatus = catchAsyncErrors(async (req, res) => {
+  const projectId = req.params.projectid;
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    return res.status(404).json({ message: 'Project not found.' });
+  }
+
+  let newMenteesList=req.body.menteesList;
+  newMenteesList.forEach(application => {
+    if(application.status==="approved")
+      project.menteesApproved.push({
+        userId: application.userId,
+        name: application.name
+      })
+  })
+
+  project.menteesApplication=newMenteesList;
+  await project.save();
+
+  res.status(200).json({ message: 'Changes successful.' });
+});
+
+// Mentor adds new task to project
+exports.addTask = catchAsyncErrors(async (req, res) => {
+  const projectId = req.params.projectid;
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    return res.status(404).json({ message: 'Project not found.' });
+  }
+
+  let taskId=projectId + project.tasks.length;
+  let task={
+    ...req.body,
+    id: taskId,
+    taskStatus: "pending",
+  }
+
+  project.tasks.push(task);
+  await project.save();
+
+  res.status(200).json({ message: 'Task added successfully.' });
+});
+
+// Mentor adds new contributor
+exports.addTaskContributor = catchAsyncErrors(async (req, res) => {
+  const projectId = req.params.projectid;
+  const taskId = req.params.taskId;
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    return res.status(404).json({ message: 'Project not found.' });
+  }
+
+  
+  const taskIndex=project.tasks.findIndex(currTask => currTask.id===taskId);
+  project.tasks[taskIndex].menteesAssigned.push(...req.body);
+
+  await project.save();
+
+  res.status(200).json({ message: 'Task added successfully.' });
+});
+
+// Mentor removes a contributor
+exports.removeTaskContributor = catchAsyncErrors(async (req, res) => {
+  const projectId = req.params.projectid;
+  const taskId = req.params.taskId;
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    return res.status(404).json({ message: 'Project not found.' });
+  }
+
+  
+  const taskIndex=project.tasks.findIndex(currTask => currTask.id===taskId);
+  project.tasks[taskIndex].menteesAssigned=project.tasks[taskIndex].menteesAssigned.filter(mentee=>{ mentee.userId!==req.body.removeUserId })
+
+  await project.save();
+
+  res.status(200).json({ message: 'Task added successfully.' });
+});
+
 
 // Selected mentees get their assigned tasks
 exports.getAssignedTasks = catchAsyncErrors(async (req, res) => {
@@ -117,26 +185,19 @@ exports.getAssignedTasks = catchAsyncErrors(async (req, res) => {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-  // Implement your logic to fetch assigned tasks based on user authentication
-  // For simplicity, let's assume that tasks are fetched for the current user (mentee)
-  const menteeTasks = await Task.find({ assigneeId: req.user.id });
-
+  const assignedTaskIds = project.menteesApproved.find(mentee => mentee.userId === req.user.id).assignedTaskIds;
+  const menteeTasks = assignedTaskIds.map(taskId=> {
+    return project.tasks.find(ele=> ele.id===taskId)
+  })
   res.json(menteeTasks);
 });
 
 // Selected mentees upload their work
 exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
-  const taskId = req.params.id;
-  const task = await Task.findById(taskId);
+  
+});
 
-  if (!task) {
-    return res.status(404).json({ message: 'Task not found.' });
-  }
-
-  // Implement your logic to handle task work uploads
-  // For simplicity, let's assume a successful upload
-  task.work = req.body.work; // Assuming 'work' is the field to store task work
-  await task.save();
-
-  res.status(200).json({ message: 'Task work uploaded successfully.' });
+// Mentor marks the task complete
+exports.markTaskComplete = catchAsyncErrors(async (req, res) => {
+  
 });
