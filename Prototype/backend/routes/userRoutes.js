@@ -31,7 +31,7 @@ router.route("/user/forgotpassword")
 router.route("/user/resetpassword/:token")
     .put(resetPassword) //users use token for password reset
 router.route("/user/verifymail")
-    .post(sendVerificationEmail) //users request for email verification
+    .post(isAuthenticatedUser, sendVerificationEmail) //users request for email verification
 router.route("/user/verifymail/:token")
     .post(verifyEmail) //users verify their email
 router.route("/user/logout")

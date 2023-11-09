@@ -14,12 +14,8 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
         crop: "scale",
     });
 
-    const { name, email, password } = req.body;
-
     const user = await User.create({
-        name,
-        email,
-        password,
+        ...req.body,
         avatar: {
             public_id: myCloud.public_id,
             url: myCloud.secure_url,
@@ -145,7 +141,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 });
 
 // Get User Detail
-exports.profile = catchAsyncErrors(async (req, res, next) => {
+exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user.id);
 
     res.status(200).json({
@@ -186,7 +182,6 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
         const user = await User.findById(req.user.id);
 
         const imageId = user.avatar.public_id;
-
         await cloudinary.v2.uploader.destroy(imageId);
 
         const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
@@ -244,14 +239,14 @@ exports.sendVerificationEmail = catchAsyncErrors(async (req, res, next) => {
 
     // Generate a unique verification token
     const token = uuid.v4();
-    verificationTokens.push({ email, token });
+    //verificationTokens.push({ email, token });
 
     // Create the email content
     const mailOptions = {
         from: process.env.OUREMAILID,
         to: email,
         subject: 'Email Verification',
-        text: `Click the following link to verify your email: http://localhost:3000/verify?token=${token}`,
+        text: `Click the following link to verify your email: http://localhost:3000/user/verifymail?token=${token}`,
     };
 
     // Send the email
