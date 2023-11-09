@@ -5,31 +5,31 @@ const router = express.Router();
 
 router.route("/projects")
     .get(isAuthenticatedUser, getAllProjects) //users gets all the projects on public feed
-    .post(isAuthenticatedUser, createProject) //mentor creates a new project
+    .post(isAuthenticatedUser, authorizeRoles("mentor"), createProject) //mentor creates a new project
 
 router.route("/projects/:projectid")
     .get(isAuthenticatedUser, getProjectDetails) //users get project details (some details hidden based on type of user: public, mentor, mentee)
-    .post(isAuthenticatedUser, editProject) //mentor edits his project details
+    .post(isAuthenticatedUser, authorizeRoles("mentor"), editProject) //mentor edits his project details
 
 router.route("/projects/:projectid/apply")
     .post(isAuthenticatedUser, applyToProject) //users applying to a project
     .delete(isAuthenticatedUser, withdrawApplication) //users withdrawing their application
 
 router.route("/projects/:projectid/updateMenteeStatus")
-    .push(isAuthenticatedUser, updateMenteeStatus) //mentor updates mentee status of applicants
+    .push(isAuthenticatedUser, authorizeRoles("mentor"), updateMenteeStatus) //mentor updates mentee status of applicants
 
 router.route("/projects/:projectid/tasks")
-    .post(isAuthenticatedUser, addTask) //mentor adds new task to the project
+    .post(isAuthenticatedUser, authorizeRoles("mentor"), addTask) //mentor adds new task to the project
 
 router.route("/projects/:projectid/tasks/:taskid")
-    .post(isAuthenticatedUser, addTaskContributor) //add contributors to the task
-    .delete(isAuthenticatedUser, removeTaskContributor) //remove contributor from the task
-    .put(isAuthenticatedUser, isAuthenticatedUser, uploadTaskWork) //selected mentees upload their work
+    .post(isAuthenticatedUser, authorizeRoles("mentor"), addTaskContributor) //add contributors to the task
+    .delete(isAuthenticatedUser, authorizeRoles("mentor"), removeTaskContributor) //remove contributor from the task
+    .put(isAuthenticatedUser, authorizeRoles("mentor"), uploadTaskWork) //selected mentees upload their work
 
 router.route("/projects/:projectid/mytasks")
-    .get(isAuthenticatedUser, isAuthenticatedUser, getAssignedTasks) //selected mentees get their assigned tasks
+    .get(isAuthenticatedUser, getAssignedTasks) //selected mentees get their assigned tasks
 
 router.route("/projects/:projectid/tasks/:taskid/markComplete")
-    .post(isAuthenticatedUser, markTaskComplete) //mentor marks the task complete with key
+    .post(isAuthenticatedUser, authorizeRoles("mentor"), markTaskComplete) //mentor marks the task complete with key
 
 module.exports = router;

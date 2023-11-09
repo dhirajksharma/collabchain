@@ -16,10 +16,6 @@ exports.getAllProjects = catchAsyncErrors(async (req, res) => {
 
 // Mentor creates a new project
 exports.createProject = catchAsyncErrors(async (req, res) => {
-  if (req.userType !== 'mentor') {
-    return res.status(403).json({ message: 'Only mentors can create projects.' });
-  }
-
   const mentor = req.user.id; // Assuming you have mentor authentication
 
   const project = await Project.create({ ...req.body, mentor });
@@ -40,12 +36,7 @@ exports.getProjectDetails = catchAsyncErrors(async (req, res) => {
 
 // Mentor edits project details
 exports.editProject = catchAsyncErrors(async (req, res) => {
-  if (req.userType !== 'mentor') {
-    return res.status(403).json({ message: 'Only mentors can edit projects.' });
-  }
-
   const projectId = req.params.projectid;
-  const { title, description, visibility } = req.body;
 
   const project = await Project.findByIdAndUpdate(
     projectId,
@@ -69,7 +60,6 @@ exports.applyToProject = catchAsyncErrors(async (req, res) => {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-  // Implement your application logic here (e.g., add user to project's applicants list)
   project.mentesApplication.push(req.body);
   await project.save();
 
@@ -113,6 +103,7 @@ exports.updateMenteeStatus = catchAsyncErrors(async (req, res) => {
   await project.save();
 
   res.status(200).json({ message: 'Changes successful.' });
+  // add code to enable rejected candidates to re apply after some time gap
 });
 
 // Mentor adds new task to project
@@ -124,7 +115,7 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-  let taskId=projectId + project.tasks.length;
+  let taskId=projectId + "_" + project.tasks.length;
   let task={
     ...req.body,
     id: taskId,
@@ -150,6 +141,9 @@ exports.addTaskContributor = catchAsyncErrors(async (req, res) => {
   
   const taskIndex=project.tasks.findIndex(currTask => currTask.id===taskId);
   project.tasks[taskIndex].menteesAssigned.push(...req.body);
+  project.menteesApproved.assignedTaskIds.push(taskId);
+  if(project.tasks[taskIndex].taskStatus==='pending')
+    project.tasks[taskIndex].taskStatus='active';
 
   await project.save();
 
@@ -169,12 +163,19 @@ exports.removeTaskContributor = catchAsyncErrors(async (req, res) => {
   
   const taskIndex=project.tasks.findIndex(currTask => currTask.id===taskId);
   project.tasks[taskIndex].menteesAssigned=project.tasks[taskIndex].menteesAssigned.filter(mentee=>{ mentee.userId!==req.body.removeUserId })
+  project.menteesApproved.assignedTaskIds=project.menteesApproved.assignedTaskIds.filter(taskID=>{ taskID!==taskId })
+  if(project.tasks[taskIndex].menteesAssigned.length===0)
+    project.tasks[taskIndex].taskStatus='pending';
 
   await project.save();
 
   res.status(200).json({ message: 'Task added successfully.' });
 });
 
+// Selected mentees upload their work
+exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
+  
+});
 
 // Selected mentees get their assigned tasks
 exports.getAssignedTasks = catchAsyncErrors(async (req, res) => {
@@ -190,11 +191,6 @@ exports.getAssignedTasks = catchAsyncErrors(async (req, res) => {
     return project.tasks.find(ele=> ele.id===taskId)
   })
   res.json(menteeTasks);
-});
-
-// Selected mentees upload their work
-exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
-  
 });
 
 // Mentor marks the task complete

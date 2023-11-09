@@ -31,7 +31,7 @@ const userSchema= new mongoose.Schema({
     },
     role:{
         type:String,
-        default:"contributor",
+        default:"mentee",
     },
     avatar:{
         public_id:{
