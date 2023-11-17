@@ -1,7 +1,8 @@
 const Web3 = require('web3');
-const contractABI = [/* Paste your contract's ABI here */];
-const contractAddress = process.env.ETH_ADDRESS; // Replace with your contract's deployed address
-const web3 = new Web3(process.env.ETH_URL); // Replace with your Ethereum node URL
+const web3 = new Web3(process.env.ETH_URL);
+
+const {contractABI} = require('./contractABI.js');
+const contractAddress = process.env.ETH_ADDRESS;
 
 // Create an instance of the contract
 const collabChainTaskLogContract = new web3.eth.Contract(contractABI, contractAddress);

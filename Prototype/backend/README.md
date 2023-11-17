@@ -15,6 +15,8 @@ Below is the list of environment variables required (the list will be updated as
 - `NODE_ENV` to detect whether the server is run in development mode or production (you do not need to alter it, it has been handled by the yarn commands mentioned above)
 - `DB_URI` stores the URI for the local database
 - `MONGO_URI` stores the URI for the production database
+- `ETH_ADDRESS` stores the address of the deployed contract
+- `ETH_URL` stores the url of the deployed contract
 - `JWT_SECRET`
 - `JWT_EXPIRE`
 - `COOKIE_EXPIRE`
