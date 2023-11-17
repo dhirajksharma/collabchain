@@ -18,7 +18,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.5.2",
     "nodemailer": "^6.9.5",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "web3": "^4.2.2"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

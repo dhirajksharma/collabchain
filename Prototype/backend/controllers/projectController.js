@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const Project = require('../models/projectModels');
 const User = require('../models/userModels');
 const Task = require('../models/task');
+const {createProject, createTask, assignUser, removeUser, createDocument, completeTask} = require("../contract/contractAPI");
 
 // Get all projects on public feed
 exports.getAllProjects = catchAsyncErrors(async (req, res) => {
@@ -17,8 +18,9 @@ exports.getAllProjects = catchAsyncErrors(async (req, res) => {
 // Mentor creates a new project
 exports.createProject = catchAsyncErrors(async (req, res) => {
   const mentor = req.user.id; // Assuming you have mentor authentication
-
+  const mentorAddress=req.body.ethAddress;
   const project = await Project.create({ ...req.body, mentor });
+  createProject(project._id, mentorAddress);
   res.status(201).json(project);
 });
 
@@ -92,11 +94,12 @@ exports.updateMenteeStatus = catchAsyncErrors(async (req, res) => {
 
   let newMenteesList=req.body.menteesList;
   newMenteesList.forEach(application => {
-    if(application.status==="approved")
+    if(application.status==="approved"){
       project.menteesApproved.push({
         userId: application.userId,
         name: application.name
       })
+    }
   })
 
   project.menteesApplication=newMenteesList;
@@ -116,6 +119,7 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
   }
 
   let taskId=projectId + "_" + project.tasks.length;
+  const mentorAddress=req.body.ethAddress;
   let task={
     ...req.body,
     id: taskId,
@@ -123,6 +127,7 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
   }
 
   project.tasks.push(task);
+  createTask(projectId, taskId, mentorAddress);
   await project.save();
 
   res.status(200).json({ message: 'Task added successfully.' });
@@ -140,11 +145,16 @@ exports.addTaskContributor = catchAsyncErrors(async (req, res) => {
 
   
   const taskIndex=project.tasks.findIndex(currTask => currTask.id===taskId);
-  project.tasks[taskIndex].menteesAssigned.push(...req.body);
+  project.tasks[taskIndex].menteesAssigned.push({
+    userId: req.body.userId,
+    name: req.body.name
+  });
   project.menteesApproved.assignedTaskIds.push(taskId);
   if(project.tasks[taskIndex].taskStatus==='pending')
     project.tasks[taskIndex].taskStatus='active';
 
+  const mentorAddress=req.body.ethAddress;
+  assignUser(projectId, taskId, req.body.candidateEthAddress, mentorAddress);
   await project.save();
 
   res.status(200).json({ message: 'Task added successfully.' });
@@ -160,13 +170,14 @@ exports.removeTaskContributor = catchAsyncErrors(async (req, res) => {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-  
+  const mentorAddress=req.body.ethAddress;
   const taskIndex=project.tasks.findIndex(currTask => currTask.id===taskId);
   project.tasks[taskIndex].menteesAssigned=project.tasks[taskIndex].menteesAssigned.filter(mentee=>{ mentee.userId!==req.body.removeUserId })
   project.menteesApproved.assignedTaskIds=project.menteesApproved.assignedTaskIds.filter(taskID=>{ taskID!==taskId })
   if(project.tasks[taskIndex].menteesAssigned.length===0)
     project.tasks[taskIndex].taskStatus='pending';
 
+  removeUser(projectId, taskId, req.body.removeUserAddress, mentorAddress);
   await project.save();
 
   res.status(200).json({ message: 'Task added successfully.' });
