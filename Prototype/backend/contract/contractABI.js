@@ -1,4 +1,4 @@
-const contractABI= [
+exports.contractABI= [
     {
       "anonymous": false,
       "inputs": [
@@ -216,5 +216,3 @@ const contractABI= [
       "constant": true
     }
   ]
-
-export {contractABI};

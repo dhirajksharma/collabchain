@@ -1,4 +1,4 @@
-const Web3 = require('web3');
+const {Web3} = require('web3');
 const web3 = new Web3(process.env.ETH_URL);
 
 const {contractABI} = require('./contractABI.js');
@@ -8,7 +8,7 @@ const contractAddress = process.env.ETH_ADDRESS;
 const collabChainTaskLogContract = new web3.eth.Contract(contractABI, contractAddress);
 
 // 1. Create a project
-async function createProject(projectId, sender) {
+exports.createProject=async function createProject(projectId, sender) {
     const createProjectTx = await collabChainTaskLogContract.methods.createProject(projectId).send({
         from: sender, // Replace with the sender's address
         gas: '50000', // Adjust the gas value as needed
@@ -17,7 +17,7 @@ async function createProject(projectId, sender) {
 }
 
 // 2. Create a task
-async function createTask(projectId, taskId, sender) {
+exports.createTask=async function createTask(projectId, taskId, sender) {
     const createTaskTx = await collabChainTaskLogContract.methods.createTask(projectId, taskId).send({
         from: sender, // Replace with the sender's address
         gas: '50000', // Adjust the gas value as needed
@@ -26,7 +26,7 @@ async function createTask(projectId, taskId, sender) {
 }
 
 // 3. Assign a user to a task
-async function assignUser(projectId, taskId, userAddress, sender) {
+exports.assignUser=async function assignUser(projectId, taskId, userAddress, sender) {
     const assignUserTx = await collabChainTaskLogContract.methods.assignUser(projectId, taskId, userAddress).send({
         from: sender, // Replace with the sender's address
         gas: '50000', // Adjust the gas value as needed
@@ -35,7 +35,7 @@ async function assignUser(projectId, taskId, userAddress, sender) {
 }
 
 // 4. Remove a user from a task
-async function removeUser(projectId, taskId, userAddress, sender) {
+exports.removeUser=async function removeUser(projectId, taskId, userAddress, sender) {
     const removeUserTx = await collabChainTaskLogContract.methods.removeUser(projectId, taskId, userAddress).send({
         from: sender, // Replace with the sender's address
         gas: '50000', // Adjust the gas value as needed
@@ -44,7 +44,7 @@ async function removeUser(projectId, taskId, userAddress, sender) {
 }
 
 // 5. Create a document for a task
-async function createDocument(taskId, documentId, content, sender) {
+exports.createDocument=async function createDocument(taskId, documentId, content, sender) {
     const createDocumentTx = await collabChainTaskLogContract.methods.createDocument(taskId, documentId, content).send({
         from: sender, // Replace with the sender's address
         gas: '50000', // Adjust the gas value as needed
@@ -53,7 +53,7 @@ async function createDocument(taskId, documentId, content, sender) {
 }
 
 // 6. Mark a task as complete
-async function completeTask(projectId, taskId, key, sender) {
+exports.completeTask=async function completeTask(projectId, taskId, key, sender) {
     const completeTaskTx = await collabChainTaskLogContract.methods.completeTask(projectId, taskId, key).send({
         from: sender, // Replace with the sender's address
         gas: '50000', // Adjust the gas value as needed
@@ -61,4 +61,4 @@ async function completeTask(projectId, taskId, key, sender) {
     console.log('Task marked as complete:', completeTaskTx);
 }
 
-export {createProject, createTask, createDocument, assignUser, removeUser, completeTask};
+// export default {createProject, createTask, createDocument, assignUser, removeUser, completeTask};

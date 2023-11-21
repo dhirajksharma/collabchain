@@ -1,13 +1,11 @@
 const ErrorHander = require("../utils/errorhander");
-const catchAsyncErrors = require("../middleware/catchAsyncErrors");
+const catchAsyncErrors = require("../middleware/catchAsyncError");
 const User = require("../models/userModel");
 const sendToken = require("../utils/jwtToken");
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
 const upload = require('express-fileupload');
-const Project = require('../models/projectModels');
-const User = require('../models/userModels');
-const Task = require('../models/task');
+const Project = require('../models/projectModel');
 const { createProject, createTask, assignUser, removeUser, createDocument, completeTask } = require("../contract/contractAPI");
 
 // Get all projects on public feed

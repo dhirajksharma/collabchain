@@ -16,7 +16,7 @@ router.route("/projects/:projectid/apply")
     .delete(isAuthenticatedUser, withdrawApplication) //users withdrawing their application
 
 router.route("/projects/:projectid/updateMenteeStatus")
-    .push(isAuthenticatedUser, authorizeRoles("mentor"), updateMenteeStatus) //mentor updates mentee status of applicants
+    .post(isAuthenticatedUser, authorizeRoles("mentor"), updateMenteeStatus) //mentor updates mentee status of applicants
 
 router.route("/projects/:projectid/tasks")
     .post(isAuthenticatedUser, authorizeRoles("mentor"), addTask) //mentor adds new task to the project
