@@ -4,7 +4,6 @@ const User = require("../models/userModel");
 const sendToken = require("../utils/jwtToken");
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
-const upload = require('express-fileupload');
 const Project = require('../models/projectModel');
 const { createProject, createTask, assignUser, removeUser, createDocument, completeTask } = require("../contract/contractAPI");
 
@@ -19,7 +18,7 @@ exports.createProject = catchAsyncErrors(async (req, res) => {
   const mentor = req.user.id; // Assuming you have mentor authentication
   const mentorAddress = req.body.ethAddress;
   const project = await Project.create({ ...req.body, mentor });
-  createProject(project._id, mentorAddress);
+  //createProject(project._id, mentorAddress);
   res.status(201).json(project);
 });
 
@@ -61,7 +60,7 @@ exports.applyToProject = catchAsyncErrors(async (req, res) => {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-  project.mentesApplication.push(req.body);
+  project.menteesApplication.push(req.body);
   await project.save();
 
   res.status(200).json({ message: 'Application successful.' });
@@ -76,7 +75,7 @@ exports.withdrawApplication = catchAsyncErrors(async (req, res) => {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-  project.menteesApplication = project.menteesApplication.filter((application) => application.userId !== req.user.id);
+  project.menteesApplication = project.menteesApplication.filter((application) => application.userId != req.user.id);
   await project.save();
 
   res.status(200).json({ message: 'Withdrawal successful.' });
@@ -117,7 +116,7 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-  let taskId = projectId + "_" + project.tasks.length;
+  let taskId = projectId + project.tasks.length;
   const mentorAddress = req.body.ethAddress;
   let task = {
     ...req.body,
@@ -126,7 +125,7 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
   }
 
   project.tasks.push(task);
-  createTask(projectId, taskId, mentorAddress);
+  //createTask(projectId, taskId, mentorAddress);
   await project.save();
 
   res.status(200).json({ message: 'Task added successfully.' });
@@ -135,34 +134,37 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
 // Mentor adds new contributor
 exports.addTaskContributor = catchAsyncErrors(async (req, res) => {
   const projectId = req.params.projectid;
-  const taskId = req.params.taskId;
+  const taskId = req.params.taskid;
   const project = await Project.findById(projectId);
 
   if (!project) {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-
-  const taskIndex = project.tasks.findIndex(currTask => currTask.id === taskId);
+  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+  
   project.tasks[taskIndex].menteesAssigned.push({
     userId: req.body.userId,
     name: req.body.name
   });
-  project.menteesApproved.assignedTaskIds.push(taskId);
+  
+  const menteeId=project.menteesApproved.findIndex(currMentee => currMentee.userId == req.body.userId)
+
+  project.menteesApproved[menteeId].assignedTaskIds.push(taskId);
   if (project.tasks[taskIndex].taskStatus === 'pending')
     project.tasks[taskIndex].taskStatus = 'active';
 
   const mentorAddress = req.body.ethAddress;
-  assignUser(projectId, taskId, req.body.candidateEthAddress, mentorAddress);
+  //assignUser(projectId, taskId, req.body.candidateEthAddress, mentorAddress);
   await project.save();
 
-  res.status(200).json({ message: 'Task added successfully.' });
+  res.status(200).json({ message: 'Task assigned successfully.' });
 });
 
 // Mentor removes a contributor
 exports.removeTaskContributor = catchAsyncErrors(async (req, res) => {
   const projectId = req.params.projectid;
-  const taskId = req.params.taskId;
+  const taskId = req.params.taskid;
   const project = await Project.findById(projectId);
 
   if (!project) {
@@ -170,34 +172,43 @@ exports.removeTaskContributor = catchAsyncErrors(async (req, res) => {
   }
 
   const mentorAddress = req.body.ethAddress;
-  const taskIndex = project.tasks.findIndex(currTask => currTask.id === taskId);
+  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
   
   project.tasks[taskIndex].menteesAssigned = project.tasks[taskIndex].menteesAssigned.filter(mentee => { mentee.userId !== req.body.removeUserId })
   
-  project.menteesApproved.assignedTaskIds = project.menteesApproved.assignedTaskIds.filter(taskID => { taskID !== taskId })
+  const menteeId=project.menteesApproved.findIndex(currMentee => currMentee.userId == req.body.removeUserId)
+
+  console.log(project.menteesApproved[menteeId])
+  project.menteesApproved[menteeId].assignedTaskIds = project.menteesApproved[menteeId].assignedTaskIds.filter(taskID => { taskID !== taskId })
   
   if (project.tasks[taskIndex].menteesAssigned.length === 0)
     project.tasks[taskIndex].taskStatus = 'pending';
 
-  removeUser(projectId, taskId, req.body.removeUserAddress, mentorAddress);
+  //removeUser(projectId, taskId, req.body.removeUserAddress, mentorAddress);
   await project.save();
 
-  res.status(200).json({ message: 'Task added successfully.' });
+  res.status(200).json({ message: 'Task unassigned successfully.' });
 });
 
 // Selected mentees upload their work
 exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
-  // const projectId = req.params.projectid;
-  const taskId = req.params.taskId;
-  const task = await Project.findById(taskId);
+  const projectId = req.params.projectid;
+  const taskId = req.params.taskid;
+  const project = await Project.findById(projectId);
 
-  if (!task) {
-    return res.status(404).json({ message: 'task not found.' });
+  if (!project) {
+    return res.status(404).json({ message: 'project not found.' });
   }
+
+  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+  
+  // project.tasks[taskIndex]
+  console.log(req.files)
+
   const file = req.files.file;
   const filename = file.name;
 
-  file.mv('../uploads'+filename, function(err){
+  file.mv('./uploads/'+filename, function(err){
     if (err) {
       res.status(404).json(err);
     }else{
@@ -209,15 +220,17 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
 
 // Selected mentees get their assigned tasks
 exports.getAssignedTasks = catchAsyncErrors(async (req, res) => {
-  const projectId = req.params.id;
+  const projectId = req.params.projectid;
   const project = await Project.findById(projectId);
 
   if (!project) {
     return res.status(404).json({ message: 'Project not found.' });
   }
 
-  const assignedTaskIds = project.menteesApproved.find(mentee => mentee.userId === req.user.id).assignedTaskIds;
-  const menteeTasks = assignedTaskIds.map(taskId => {
+  const mentee = project.menteesApproved.find(mentee => mentee.userId == req.user.id)
+  console.log(project.menteesApproved)
+  console.log(req.user.id)
+  const menteeTasks = mentee.assignedTaskIds.map(taskId => {
     return project.tasks.find(ele => ele.id === taskId)
   })
   res.json(menteeTasks);

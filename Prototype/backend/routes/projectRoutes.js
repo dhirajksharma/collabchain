@@ -15,7 +15,7 @@ router.route("/projects/:projectid/apply")
     .post(isAuthenticatedUser, applyToProject) //users applying to a project
     .delete(isAuthenticatedUser, withdrawApplication) //users withdrawing their application
 
-router.route("/projects/:projectid/updateMenteeStatus")
+router.route("/projects/:projectid/updatementeestatus")
     .post(isAuthenticatedUser, authorizeRoles("mentor"), updateMenteeStatus) //mentor updates mentee status of applicants
 
 router.route("/projects/:projectid/tasks")
@@ -29,7 +29,7 @@ router.route("/projects/:projectid/tasks/:taskid")
 router.route("/projects/:projectid/mytasks")
     .get(isAuthenticatedUser, getAssignedTasks) //selected mentees get their assigned tasks
 
-router.route("/projects/:projectid/tasks/:taskid/markComplete")
+router.route("/projects/:projectid/tasks/:taskid/markcomplete")
     .post(isAuthenticatedUser, authorizeRoles("mentor"), markTaskComplete) //mentor marks the task complete with key
 
 module.exports = router;
