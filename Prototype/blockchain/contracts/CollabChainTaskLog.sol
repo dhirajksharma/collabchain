@@ -40,7 +40,8 @@ contract CollabChainTaskLog {
     }
 
     //signals emitted by the blockchain upon a certain event
-    event ProjectCreated();
+    event AboutToCreateProject(address mentr);
+    event ProjectCreated(address mentr);
     event TaskCreated();
     event UserAssigned();
     event UserRemoved();
@@ -56,7 +57,7 @@ contract CollabChainTaskLog {
     //mentor creates a project
     function createProject(string memory projectId) public{
         projectMentors[projectId]=msg.sender;
-        emit ProjectCreated();
+        emit ProjectCreated(projectMentors[projectId]);
     }
 
     //mentor creates a task
@@ -102,8 +103,8 @@ contract CollabChainTaskLog {
 
     //mentor marks the task complete by entering the verification key given to them by the user
     //verifying this key against our original key to check authenticity
-    function completeTask(string memory projectId, string memory taskId, bytes32 key) public onlyMentor(projectId, msg.sender) onlyOngoingTasks(taskId) {
-        require(keccak256(abi.encodePacked(key)) == keccak256(abi.encodePacked(tasks[taskId].verificationKey)), "Invalid verification key");
+    function completeTask(string memory projectId, string memory taskId) public onlyMentor(projectId, msg.sender) onlyOngoingTasks(taskId) {
+        // require(keccak256(abi.encodePacked(key)) == keccak256(abi.encodePacked(tasks[taskId].verificationKey)), "Invalid verification key");
         tasks[taskId].isComplete = true;
         emit TaskCompleted();
     }

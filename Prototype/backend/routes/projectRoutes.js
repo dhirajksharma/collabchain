@@ -24,7 +24,7 @@ router.route("/projects/:projectid/tasks")
 router.route("/projects/:projectid/tasks/:taskid")
     .post(isAuthenticatedUser, authorizeRoles("mentor"), addTaskContributor) //add contributors to the task
     .delete(isAuthenticatedUser, authorizeRoles("mentor"), removeTaskContributor) //remove contributor from the task
-    .put(isAuthenticatedUser, authorizeRoles("mentor"), uploadTaskWork) //selected mentees upload their work
+    .put(isAuthenticatedUser, authorizeRoles("mentee"), uploadTaskWork) //selected mentees upload their work
 
 router.route("/projects/:projectid/mytasks")
     .get(isAuthenticatedUser, getAssignedTasks) //selected mentees get their assigned tasks

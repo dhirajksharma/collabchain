@@ -18,7 +18,7 @@ exports.createProject = catchAsyncErrors(async (req, res) => {
   const mentor = req.user.id; // Assuming you have mentor authentication
   const mentorAddress = req.body.ethAddress;
   const project = await Project.create({ ...req.body, mentor });
-  //createProject(project._id, mentorAddress);
+  createProject(project._id.toString(), mentorAddress);
   res.status(201).json(project);
 });
 
@@ -125,7 +125,7 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
   }
 
   project.tasks.push(task);
-  //createTask(projectId, taskId, mentorAddress);
+  createTask(projectId, taskId, mentorAddress);
   await project.save();
 
   res.status(200).json({ message: 'Task added successfully.' });
@@ -156,6 +156,7 @@ exports.addTaskContributor = catchAsyncErrors(async (req, res) => {
 
   const mentorAddress = req.body.ethAddress;
   //assignUser(projectId, taskId, req.body.candidateEthAddress, mentorAddress);
+  assignUser(projectId, taskId, process.env.MENTEEETH, mentorAddress);
   await project.save();
 
   res.status(200).json({ message: 'Task assigned successfully.' });
@@ -185,6 +186,7 @@ exports.removeTaskContributor = catchAsyncErrors(async (req, res) => {
     project.tasks[taskIndex].taskStatus = 'pending';
 
   //removeUser(projectId, taskId, req.body.removeUserAddress, mentorAddress);
+  removeUser(projectId, taskId, process.env.MENTEEETH, mentorAddress);
   await project.save();
 
   res.status(200).json({ message: 'Task unassigned successfully.' });
@@ -201,12 +203,18 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
   }
 
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+  const menteeAddress = req.body.ethAddress;
   
   // project.tasks[taskIndex]
-  console.log(req.files)
 
   const file = req.files.file;
   const filename = file.name;
+  
+  const hash = crypto.createHash('sha256');
+  hash.update(file.data);
+  const fileHash = hash.digest('hex');
+  
+  console.log(fileHash);
 
   file.mv('./uploads/'+filename, function(err){
     if (err) {
@@ -215,6 +223,8 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
       res.status(200).json({ message: 'Uploaded successfully.' });
     }
   })
+
+  createDocument(taskId, taskId+'123', fileHash, menteeAddress)
 
 });
 
@@ -238,5 +248,20 @@ exports.getAssignedTasks = catchAsyncErrors(async (req, res) => {
 
 // Mentor marks the task complete
 exports.markTaskComplete = catchAsyncErrors(async (req, res) => {
-  
+  const projectId = req.params.projectid;
+  const taskId = req.params.taskid;
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    return res.status(404).json({ message: 'Project not found.' });
+  }
+
+  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+  project.tasks[taskIndex].taskStatus='complete';
+
+  const verificationKey = req.body.verificationKey;
+  const mentorAddress = req.body.ethAddress;
+
+  createDocument(projectId, taskId, mentorAddress)
 });
