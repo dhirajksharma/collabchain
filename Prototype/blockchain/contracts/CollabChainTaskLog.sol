@@ -76,11 +76,11 @@ contract CollabChainTaskLog {
 
     //mentor creates a task
     //upon creation a verification key is generated which will be used later
-    function createTask(string memory projectId, string memory taskId, string memory key) public onlyMentor(projectId, msg.sender) {
+    function createTask(string memory projectId, string memory taskId) public onlyMentor(projectId, msg.sender) {
         tasks[taskId] = Task({
             projectId: projectId,
             isComplete: false,
-            verificationKey: key,
+            verificationKey: "abc",
             assignedUsers: new address[](0),
             documentIDs: new string[](0)
         });
@@ -109,8 +109,9 @@ contract CollabChainTaskLog {
 
     //assigned users add documents to the project
     //when they upload the documents, they will be given the verification key
-    function createDocument(string memory taskId, string memory documentId, string memory content) public onlyAssigned(taskId, msg.sender) onlyOngoingTasks(taskId) {
+    function createDocument(string memory taskId, string memory documentId, string memory content, string memory key) public onlyAssigned(taskId, msg.sender) onlyOngoingTasks(taskId) {
         tasks[taskId].documentIDs.push(documentId);
+        tasks[taskId].verificationKey=key;
         documentHash[documentId]=content;
         emit DocumentCreated(tasks[taskId].verificationKey);
     }

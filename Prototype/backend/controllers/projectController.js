@@ -118,7 +118,6 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
 
   let taskId = projectId + project.tasks.length;
   const mentorAddress = req.body.ethAddress;
-  const key = req.body.key;
   let task = {
     title: req.body.title,
     description: req.body.description,
@@ -129,7 +128,7 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
   }
 
   project.tasks.push(task);
-  createTask(projectId, taskId, key, mentorAddress);
+  createTask(projectId, taskId, mentorAddress);
   await project.save();
 
   res.status(200).json({ message: 'Task added successfully.' });
@@ -210,7 +209,7 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
   const menteeAddress = req.body.ethAddress;
   
   // project.tasks[taskIndex]
-
+  const key=req.body.key;
   const file = req.files.file;
   const filename = file.name;
   
@@ -228,7 +227,7 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
     }
   })
 
-  createDocument(taskId, taskId+'123', fileHash, menteeAddress)
+  createDocument(taskId, taskId+'123', fileHash, key, menteeAddress)
 
 });
 

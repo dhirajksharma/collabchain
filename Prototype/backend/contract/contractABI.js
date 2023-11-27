@@ -126,11 +126,6 @@ exports.contractABI= [
         "internalType": "string",
         "name": "taskId",
         "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "key",
-        "type": "string"
       }
     ],
     "name": "createTask",
@@ -199,6 +194,11 @@ exports.contractABI= [
       {
         "internalType": "string",
         "name": "content",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "key",
         "type": "string"
       }
     ],

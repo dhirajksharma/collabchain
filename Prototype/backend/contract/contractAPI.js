@@ -17,8 +17,8 @@ exports.createProject=async function createProject(projectId, sender) {
 }
 
 // 2. Create a task
-exports.createTask=async function createTask(projectId, taskId, key, sender) {
-    const createTaskTx = await collabChainTaskLogContract.methods.createTask(projectId, taskId, key).send({
+exports.createTask=async function createTask(projectId, taskId, sender) {
+    const createTaskTx = await collabChainTaskLogContract.methods.createTask(projectId, taskId).send({
         from: process.env.MENTORETH, // Replace with the sender's address
         gas: '5000000', // Adjust the gas value as needed
     });
@@ -44,8 +44,8 @@ exports.removeUser=async function removeUser(projectId, taskId, userAddress, sen
 }
 
 // 5. Create a document for a task
-exports.createDocument=async function createDocument(taskId, documentId, content, sender) {
-    const createDocumentTx = await collabChainTaskLogContract.methods.createDocument(taskId, documentId, content).send({
+exports.createDocument=async function createDocument(taskId, documentId, content, key, sender) {
+    const createDocumentTx = await collabChainTaskLogContract.methods.createDocument(taskId, documentId, content, key).send({
         from: process.env.MENTEEETH, // Replace with the sender's address
         gas: '5000000', // Adjust the gas value as needed
     });
