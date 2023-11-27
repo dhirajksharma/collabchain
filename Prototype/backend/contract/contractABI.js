@@ -4,22 +4,9 @@ exports.contractABI= [
     "inputs": [
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "mentr",
-        "type": "address"
-      }
-    ],
-    "name": "AboutToCreateProject",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "bytes32",
+        "internalType": "string",
         "name": "verificationKey",
-        "type": "bytes32"
+        "type": "string"
       }
     ],
     "name": "DocumentCreated",
@@ -83,12 +70,36 @@ exports.contractABI= [
         "type": "bool"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "string",
         "name": "verificationKey",
-        "type": "bytes32"
+        "type": "string"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "a",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "b",
+        "type": "string"
+      }
+    ],
+    "name": "compareStrings",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {
@@ -114,6 +125,11 @@ exports.contractABI= [
       {
         "internalType": "string",
         "name": "taskId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "key",
         "type": "string"
       }
     ],
@@ -201,6 +217,11 @@ exports.contractABI= [
       {
         "internalType": "string",
         "name": "taskId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "key",
         "type": "string"
       }
     ],

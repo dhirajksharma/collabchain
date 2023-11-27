@@ -17,8 +17,8 @@ exports.createProject=async function createProject(projectId, sender) {
 }
 
 // 2. Create a task
-exports.createTask=async function createTask(projectId, taskId, sender) {
-    const createTaskTx = await collabChainTaskLogContract.methods.createTask(projectId, taskId).send({
+exports.createTask=async function createTask(projectId, taskId, key, sender) {
+    const createTaskTx = await collabChainTaskLogContract.methods.createTask(projectId, taskId, key).send({
         from: process.env.MENTORETH, // Replace with the sender's address
         gas: '5000000', // Adjust the gas value as needed
     });
@@ -53,12 +53,10 @@ exports.createDocument=async function createDocument(taskId, documentId, content
 }
 
 // 6. Mark a task as complete
-exports.completeTask=async function completeTask(projectId, taskId, sender) {
+exports.completeTask=async function completeTask(projectId, taskId, key, sender) {
     const completeTaskTx = await collabChainTaskLogContract.methods.completeTask(projectId, taskId, key).send({
         from: process.env.MENTORETH, // Replace with the sender's address
         gas: '5000000', // Adjust the gas value as needed
     });
     console.log('Task marked as complete:', completeTaskTx);
 }
-
-// export default {createProject, createTask, createDocument, assignUser, removeUser, completeTask};

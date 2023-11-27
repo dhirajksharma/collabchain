@@ -118,14 +118,18 @@ exports.addTask = catchAsyncErrors(async (req, res) => {
 
   let taskId = projectId + project.tasks.length;
   const mentorAddress = req.body.ethAddress;
+  const key = req.body.key;
   let task = {
-    ...req.body,
+    title: req.body.title,
+    description: req.body.description,
+    priority: req.body.priority,
+    dueDate: req.body.dueDate,
     id: taskId,
     taskStatus: "pending",
   }
 
   project.tasks.push(task);
-  createTask(projectId, taskId, mentorAddress);
+  createTask(projectId, taskId, key, mentorAddress);
   await project.save();
 
   res.status(200).json({ message: 'Task added successfully.' });
@@ -263,5 +267,5 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res) => {
   const verificationKey = req.body.verificationKey;
   const mentorAddress = req.body.ethAddress;
 
-  createDocument(projectId, taskId, mentorAddress)
+  completeTask(projectId, taskId, verificationKey);
 });

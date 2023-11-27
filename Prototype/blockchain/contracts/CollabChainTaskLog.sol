@@ -11,7 +11,7 @@ contract CollabChainTaskLog {
     struct Task {
         string projectId;
         bool isComplete; //boolean to track task completion
-        bytes32 verificationKey; //verification key for mentor to mark the task complete
+        string verificationKey; //verification key for mentor to mark the task complete
         address[] assignedUsers; //array of users allocated to the task
         string[] documentIDs; //array of document ids and their content hash to verify against tampered documents
     }
@@ -40,18 +40,32 @@ contract CollabChainTaskLog {
     }
 
     //signals emitted by the blockchain upon a certain event
-    event AboutToCreateProject(address mentr);
     event ProjectCreated(address mentr);
     event TaskCreated();
     event UserAssigned();
     event UserRemoved();
-    event DocumentCreated(bytes32 verificationKey);
+    event DocumentCreated(string verificationKey);
     event TaskCompleted();
 
     //generate verification key
     function generateKey() internal view returns (bytes32) {
         uint256 seed = uint256(block.timestamp) + uint256(blockhash(block.number - 1));
         return keccak256(abi.encodePacked(seed));
+    }
+
+    //compare verification key strings
+    function compareStrings(string memory a, string memory b) public pure returns (bool) {
+        bytes memory strA = bytes(a);
+        bytes memory strB = bytes(b);
+        if (strA.length != strB.length) {
+            return false;
+        }
+        for (uint i = 0; i < strA.length; i++) {
+            if (strA[i] != strB[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     //mentor creates a project
@@ -62,11 +76,11 @@ contract CollabChainTaskLog {
 
     //mentor creates a task
     //upon creation a verification key is generated which will be used later
-    function createTask(string memory projectId, string memory taskId) public onlyMentor(projectId, msg.sender) {
+    function createTask(string memory projectId, string memory taskId, string memory key) public onlyMentor(projectId, msg.sender) {
         tasks[taskId] = Task({
             projectId: projectId,
             isComplete: false,
-            verificationKey: generateKey(),
+            verificationKey: key,
             assignedUsers: new address[](0),
             documentIDs: new string[](0)
         });
@@ -103,8 +117,9 @@ contract CollabChainTaskLog {
 
     //mentor marks the task complete by entering the verification key given to them by the user
     //verifying this key against our original key to check authenticity
-    function completeTask(string memory projectId, string memory taskId) public onlyMentor(projectId, msg.sender) onlyOngoingTasks(taskId) {
+    function completeTask(string memory projectId, string memory taskId, string memory key) public onlyMentor(projectId, msg.sender) onlyOngoingTasks(taskId) {
         // require(keccak256(abi.encodePacked(key)) == keccak256(abi.encodePacked(tasks[taskId].verificationKey)), "Invalid verification key");
+        require( compareStrings(key, tasks[taskId].verificationKey) , "Invalid verification key");
         tasks[taskId].isComplete = true;
         emit TaskCompleted();
     }
