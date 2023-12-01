@@ -209,7 +209,7 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res) => {
   const menteeAddress = req.body.ethAddress;
   
   // project.tasks[taskIndex]
-  const key=req.body.key;
+  const key=req.body.key || "abced";
   const file = req.files.file;
   const filename = file.name;
   
@@ -265,6 +265,7 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res) => {
 
   const verificationKey = req.body.verificationKey;
   const mentorAddress = req.body.ethAddress;
-
+  await project.save();
   completeTask(projectId, taskId, verificationKey);
+  res.status(200).json({ message: 'Task Marked Complete' });
 });
