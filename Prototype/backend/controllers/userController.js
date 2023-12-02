@@ -198,31 +198,6 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Get all contributors(researcher)
-exports.getAllUser = catchAsyncErrors(async (req, res, next) => {
-    const users = await User.find();
-
-    res.status(200).json({
-        success: true,
-        users,
-    });
-});
-
-// Get single contributors(Researcher)
-exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-        return next(
-            new ErrorHander(`User does not exist with Id: ${req.params.id}`)
-        );
-    }
-
-    res.status(200).json({
-        success: true,
-        user,
-    });
-});
 
 // Send verification Email
 exports.sendVerificationEmail = catchAsyncErrors(async (req, res, next) => {
