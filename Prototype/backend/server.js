@@ -13,11 +13,11 @@ process.on("uncaughtException",(err)=>{
 
 //connecting to database [NOTE: connecting after config file to make sure it gets those variables]
 connectDatabase()
-
-const PORT=process.env.PORT||4000
-
-const server=app.listen(PORT,()=>{
-    console.log(`Server is working on https://localhost:${PORT}`);
+.then(()=>{
+    const PORT=process.env.PORT || 4000
+    app.listen(PORT,()=>{
+        console.log(`Server is working on https://localhost:${PORT}`);
+    })
 })
 
 process.on("unhandledRejection",err=>{
