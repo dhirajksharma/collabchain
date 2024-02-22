@@ -5,8 +5,7 @@ const projectSchema= new mongoose.Schema({
         type:String,
     },
     domain:{
-        type: mongoose.Schema.ObjectId,
-        ref:"Domain",
+        type: String,
     },
     description:{
         type:String,
@@ -147,6 +146,11 @@ const projectSchema= new mongoose.Schema({
             ],
         }
     ],
+    parentProjectId:{
+        type: mongoose.Schema.ObjectId,
+        ref: "Project",
+        default: null,
+    },
     links:[
         {
             linkType:{
