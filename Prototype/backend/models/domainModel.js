@@ -2,7 +2,8 @@ const mongoose=require("mongoose");
 
 const domainSchema= new mongoose.Schema({
     name:{
-        type:string,
+        type: String,
+        unique: true,
     },
 })
 

@@ -2,11 +2,16 @@ const mongoose=require("mongoose");
 
 const organizationSchema= new mongoose.Schema({
     name:{
-        type:string,
+        type: String,
+        unique: true
+    },
+    email:{
+        type: String,
+        unique: true
     },
     address:{
-        type:string,
-    }
+        type: String,
+    },
 })
 
 module.exports=mongoose.model("Organization",organizationSchema);
