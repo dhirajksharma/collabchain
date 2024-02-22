@@ -1,11 +1,15 @@
 const ErrorHander = require("../utils/errorhander");
 const catchAsyncErrors = require("../middleware/catchAsyncError");
-const User = require("../models/userModel");
-const sendToken = require("../utils/jwtToken");
-const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
 const Project = require('../models/projectModel');
-const { createProject, createTask, assignUser, removeUser, createDocument, completeTask } = require("../contract/contractAPI");
+const {
+  createProject,
+  createTask,
+  assignUser,
+  removeUser,
+  createDocument,
+  completeTask
+} = require("../contract/contractAPI");
 
 // Get all projects on public feed
 exports.getAllProjects = catchAsyncErrors(async (req, res) => {
@@ -15,9 +19,12 @@ exports.getAllProjects = catchAsyncErrors(async (req, res) => {
 
 // Mentor creates a new project
 exports.createProject = catchAsyncErrors(async (req, res) => {
-  const mentor = req.user.id; // Assuming you have mentor authentication
+  const mentor = req.user._id;
   const mentorAddress = req.body.ethAddress;
-  const project = await Project.create({ ...req.body, mentor });
+  const project = await Project.create({
+    mentor,
+    ...req.body,
+  });
   createProject(project._id.toString(), mentorAddress);
   res.status(201).json(project);
 });

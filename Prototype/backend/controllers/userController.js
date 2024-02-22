@@ -14,7 +14,10 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
     //     crop: "scale",
     // });
 
-    const user = await User.create({...req.body});
+    const user = await User.create({
+        verifyEmailStatus: false,
+        ...req.body
+    });
 
     sendToken(user, 201, res);
 });

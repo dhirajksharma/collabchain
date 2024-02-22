@@ -31,6 +31,7 @@ const userSchema= new mongoose.Schema({
     },
     role:{
         type:String,
+        enum: ["mentor", "mentee"],
         default:"mentee",
     },
     avatar:{
