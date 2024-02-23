@@ -1,25 +1,41 @@
 const ErrorHander = require("../utils/errorhander");
+const ApiResponse = require("../utils/ApiResponse");
 const catchAsyncErrors = require("../middleware/catchAsyncError");
 const User = require("../models/userModel");
+const Organization=require("../models/organizationModel");
 const sendToken = require("../utils/jwtToken");
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
-//const cloudinary = require("cloudinary");
+const path = require("path");
 
 // Register a User
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
-    // const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
-    //     folder: "avatars",
-    //     width: 150,
-    //     crop: "scale",
-    // });
+    const userExists = await User.findOne({email: req.body.email});
+    
+    if(!userExists){
+        let orgId=req.body.organization.organization_id;
+        if(orgId==null){
+        let org=await Organization.create({
+            name: req.body.organization.name,
+            email: req.body.organization.email,
+            address: req.body.organization.address
+        });
 
-    const user = await User.create({
-        verifyEmailStatus: false,
-        ...req.body
-    });
-
-    sendToken(user, 201, res);
+        orgId=org._id;
+        }
+        
+        req.body.organization={
+            organization_id: orgId,
+            designation: req.body.organization.designation
+        }
+        const user = await User.create({
+            ...req.body
+        });
+    
+        sendToken(user, 201, res);
+    }else{
+        return next(new ErrorHander("User Already exists", 400));
+    }
 });
 
 // Login User
@@ -56,10 +72,7 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
         secure: true
     });
 
-    res.status(200).json({
-        success: true,
-        message: "Logged Out",
-    });
+    res.status(200).json(new ApiResponse(200, null, "Logout Successful"));
 });
 
 // Forgot Password
@@ -72,13 +85,9 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     // Get ResetPassword Token
     const resetToken = user.getResetPasswordToken();
-
     await user.save({ validateBeforeSave: false });
 
-    const resetPasswordUrl = `${req.protocol}://${req.get(
-        "host"
-    )}/password/reset/${resetToken}`;
-
+    const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
     const message = `Your password reset token is :- \n\n ${resetPasswordUrl} \n\nIf you have not requested this email then, please ignore it.`;
 
     try {
@@ -88,10 +97,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
             message,
         });
 
-        res.status(200).json({
-            success: true,
-            message: `Email sent to ${user.email} successfully`,
-        });
+        res.status(200).json(new ApiResponse(200, null, `Email sent to ${user.email} successfully`));
     } catch (error) {
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
@@ -116,12 +122,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     });
 
     if (!user) {
-        return next(
-            new ErrorHander(
-                "Reset Password Token is invalid or has been expired",
-                400
-            )
-        );
+        return next(new ErrorHander("Reset Password Token is invalid or has been expired",400));
     }
 
     if (req.body.password !== req.body.confirmPassword) {
@@ -141,16 +142,21 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user.id);
 
-    res.status(200).json({
-        success: true,
-        user,
-    });
+    if(!user){
+        return next(new ErrorHander("User not found", 400));
+    }else{
+        res.status(200).json(new ApiResponse(200, user));
+    }
 });
 
 // update User password
 exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user.id).select("+password");
 
+    if (!user) {
+        return next(new ErrorHander("Reset Password Token is invalid or has been expired",400));
+    }
+    
     const isPasswordMatched = await user.comparePassword(req.body.oldPassword);
 
     if (!isPasswordMatched) {
@@ -162,7 +168,6 @@ exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
     }
 
     user.password = req.body.newPassword;
-
     await user.save();
 
     sendToken(user, 200, res);
@@ -170,35 +175,13 @@ exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
 
 // update User Profile
 exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
-    // add conditions for some update fields
-    
-    // if (req.body.avatar !== "") {
-    //     const user = await User.findById(req.user.id);
-
-    //     const imageId = user.avatar.public_id;
-    //     await cloudinary.v2.uploader.destroy(imageId);
-
-    //     const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
-    //         folder: "avatars",
-    //         width: 150,
-    //         crop: "scale",
-    //     });
-
-    //     newUserData.avatar = {
-    //         public_id: myCloud.public_id,
-    //         url: myCloud.secure_url,
-    //     };
-    // }
-
     const user = await User.findByIdAndUpdate(req.user.id, req.body, {
         new: true,
         runValidators: true,
         useFindAndModify: false,
     });
 
-    res.status(200).json({
-        success: true,
-    });
+    res.status(200).json(new ApiResponse(200, user));
 });
 
 
@@ -221,11 +204,9 @@ exports.sendVerificationEmail = catchAsyncErrors(async (req, res, next) => {
     // Send the email
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Email could not be sent.' });
+            return next(new ErrorHander('Email could not be sent.', 500));
         } else {
-            console.log('Email sent: ' + info.response);
-            res.status(200).json({ message: 'Email sent successfully.' });
+            res.status(200).json(new ApiResponse(200, payload, "Email sent successfully"));
         }
     });
 });
@@ -249,16 +230,54 @@ exports.verifyEmail = catchAsyncErrors(async (req, res, next) => {
         );
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
+            return next(new ErrorHander("User Not Found", 400));
         }
 
         // Remove the used token from the array (for one-time use tokens)
         verificationTokens.splice(verificationTokens.indexOf(verificationData), 1);
 
         // You can customize the response message according to your application's requirements
-        return res.status(200).json({ message: 'Email verified successfully.' });
+        return res.status(200).json(new ApiResponse(200, null, "Verification Successful"));
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Internal Server Error.' });
+        return next(new ErrorHander("Server Error", 500));
     }
+});
+
+//User uploads his resume or pic
+exports.uploadFile = catchAsyncErrors(async (req, res) => {
+    const userId = req.params.userid;
+    const user = await User.findById(userId);
+  
+    if (!user) {
+      return next(new ErrorHander("User not found", 400));
+    }
+  
+    const filetype=req.body.type;
+    const file = req.files.file;
+    
+    file.mv(`./uploads/${filetype}/`+userId, function(err){
+      if (err) {
+        return next(new ErrorHander("Upload failed", 401));
+      }else{
+        return res.status(201).json(new ApiResponse(201, null, "upload successful"));
+      }
+    })
+  });
+
+exports.getFile = catchAsyncErrors(async (req, res) => {
+    const userId = req.params.userid;
+    const user = await User.findById(userId);
+
+    if (!user) {
+        return next(new ErrorHander("User not found", 400));
+    }
+
+    const filetype=req.body.type;
+    const filePath = path.join(__dirname, `../uploads/${filetype}/${userId}`);
+
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            res.status(404).send('File not found');
+        }
+    });
 });

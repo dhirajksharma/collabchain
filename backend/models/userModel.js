@@ -29,21 +29,6 @@ const userSchema= new mongoose.Schema({
         type:Number,
         required: true
     },
-    role:{
-        type:String,
-        enum: ["mentor", "mentee"],
-        default:"mentee",
-    },
-    avatar:{
-        public_id:{
-            type:String,
-            required:true,
-        },
-        url:{
-            type:String,
-            required:true,
-        }
-    },
     password:{
         type:String,
         required:[true, "Please enter password"],
@@ -57,16 +42,6 @@ const userSchema= new mongoose.Schema({
         },
         designation:{
             type:String
-        }
-    },
-    resume:{
-        public_id:{
-            type:String,
-            required:true,
-        },
-        url:{
-            type:String,
-            required:true,
         }
     },
     project_ongoing:{
