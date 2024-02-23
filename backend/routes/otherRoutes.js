@@ -1,9 +1,8 @@
 const express=require("express");
 const router=express.Router();
+const {getAllOrg}=require("../controllers/organizationController");
 
-router.route("/organizations")
-    .get() //get list of all organizations
-router.route("/domains")
-    .get() //get list of all domains
+router.route("/")
+    .get(getAllOrg) //get list of all organizations
 
 module.exports=router;
