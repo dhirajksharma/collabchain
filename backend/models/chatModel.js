@@ -9,6 +9,11 @@ const chatSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    projectId: {
+        type: mongoose.Schema.ObjectId,
+        ref: "Project",
+        default: null
+    },
     lastMessage: {
         type: mongoose.Schema.ObjectId,
         ref: "ChatMessage",

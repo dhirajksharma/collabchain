@@ -69,6 +69,7 @@ const projectSchema= new mongoose.Schema({
             },
             status:{
                 type:String,
+                default: "pending",
             }
         }
     ],
@@ -104,7 +105,8 @@ const projectSchema= new mongoose.Schema({
                 type:Date
             },
             taskStatus:{
-                type:String
+                type:String,
+                default: "pending",
             },
             menteesAssigned:[
                 {
