@@ -36,9 +36,9 @@ const other=require("./routes/otherRoutes")
 const chat=require("./routes/chatRoutes")
 const message=require("./routes/messageRoutes")
 
-app.use("/api",user)
-app.use("/api",project)
-app.use("/api",other)
+app.use("/api/user",user)
+app.use("/api/projects",project)
+app.use("/api/organization",other)
 app.use("/api/chat",chat)
 app.use("/api/message",message)
 
