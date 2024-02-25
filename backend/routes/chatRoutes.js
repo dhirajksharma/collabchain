@@ -20,7 +20,7 @@ router.route("/c/:receiverId")
 router.route("/group")
   .post(createAGroupChat);
 
-router.route("/group/:chatId")
+router.route("/group/:projectId")
   .get(getGroupChatDetails)
 
 router.route("/group/:chatId/:participantId")
