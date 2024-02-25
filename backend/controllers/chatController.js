@@ -5,7 +5,7 @@ const Chat = require("../models/chatModel");
 const ChatMessage = require("../models/messageModel");
 const { emitSocketEvent }=require("../socket/index.js");
 const ErrorHander = require("../utils/errorhander");
-const { ApiResponse }=require("../utils/ApiResponse.js");
+const ApiResponse=require("../utils/ApiResponse.js");
 const catchAsyncErrors = require("../middleware/catchAsyncError");
 
 const chatCommonAggregation = () => {
@@ -71,21 +71,6 @@ const chatCommonAggregation = () => {
       },
     },
   ];
-};
-
-/**
- * @description utility function responsible for removing all the messages and file attachments attached to the deleted chat
- */
-const deleteCascadeChatMessages = async (chatId) => {
-  // fetch the messages associated with the chat to remove
-  const messages = await ChatMessage.find({
-    chat: new mongoose.Types.ObjectId(chatId),
-  });
-
-  // delete all the messages
-  await ChatMessage.deleteMany({
-    chat: new mongoose.Types.ObjectId(chatId),
-  });
 };
 
 exports.createOrGetAOneOnOneChat = catchAsyncErrors(async (req, res, next) => {
@@ -229,11 +214,11 @@ exports.createAGroupChat = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getGroupChatDetails = catchAsyncErrors(async (req, res, next) => {
-  const { chatId } = req.params;
+  const { projectId } = req.params;
   const groupChat = await Chat.aggregate([
     {
       $match: {
-        _id: new mongoose.Types.ObjectId(chatId),
+        projectId: new mongoose.Types.ObjectId(projectId),
         isGroupChat: true,
       },
     },

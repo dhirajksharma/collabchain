@@ -4,7 +4,7 @@ const Chat = require("../models/chatModel");
 const ChatMessage = require("../models/messageModel");
 const { emitSocketEvent }=require("../socket/index.js");
 const ErrorHander = require("../utils/errorhander");
-const { ApiResponse }=require("../utils/ApiResponse.js");
+const ApiResponse=require("../utils/ApiResponse.js");
 const catchAsyncErrors = require("../middleware/catchAsyncError");
 
 const chatMessageCommonAggregation = () => {
