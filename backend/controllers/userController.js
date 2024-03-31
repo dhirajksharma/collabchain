@@ -244,7 +244,7 @@ exports.verifyEmail = catchAsyncErrors(async (req, res, next) => {
 });
 
 //User uploads his resume or pic
-exports.uploadFile = catchAsyncErrors(async (req, res) => {
+exports.uploadFile = catchAsyncErrors(async (req, res, next) => {
     const userId = req.params.userid;
     const user = await User.findById(userId);
   
@@ -264,7 +264,7 @@ exports.uploadFile = catchAsyncErrors(async (req, res) => {
     })
   });
 
-exports.getFile = catchAsyncErrors(async (req, res) => {
+exports.getFile = catchAsyncErrors(async (req, res, next) => {
     const userId = req.params.userid;
     const user = await User.findById(userId);
 
