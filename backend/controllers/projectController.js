@@ -19,9 +19,9 @@ const {
 // Get all projects on public feed
 exports.getAllProjects = catchAsyncErrors(async (req, res, next) => {
   const publicProjects = await Project.find({
-    $or: [
+    $or:[
       { endDate: { $lt: new Date() } },
-      { menteesRequired: { $gt: 0 } }
+      { menteesRequired : { $gt: 0 } }
     ]
   });
   res.status(201).json(new ApiResponse(201, publicProjects));
@@ -60,7 +60,7 @@ exports.createProject = catchAsyncErrors(async (req, res, next) => {
       startDate: req.body.startDate,
       endDate: req.body.endDate
     });
-
+    
     await createProject(project._id.toString(), mentorAddress);
     // const grpMembers=new Array(project.mentor);
     // const groupChat = await Chat.create({
@@ -73,7 +73,6 @@ exports.createProject = catchAsyncErrors(async (req, res, next) => {
 
     res.status(201).json(new ApiResponse(201, project, "Project made successfully"));
   } catch (error) {
-    console.log(error.message);
     if (project && project._id) {
       //await Chat.findOneAndDelete({isGroupChat: true, projectId: project._id});
       await Project.findByIdAndDelete(project._id);
@@ -155,8 +154,8 @@ exports.updateMenteeStatus = catchAsyncErrors(async (req, res, next) => {
   }
   let newMenteesList = req.body.menteesList;
   newMenteesList.forEach(application => {
-    if (application.status === "approved" && project.menteesRequired > 0) {
-      project.menteesRequired = project.menteesRequired - 1;
+    if (application.status === "approved" && project.menteesRequired>0) {
+      project.menteesRequired=project.menteesRequired-1;
       project.menteesApproved.push({
         userId: application.userId,
         name: application.name
