@@ -1,91 +1,223 @@
+"use client";
+
+import { useState } from "react";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
+  Progress,
+  Box,
+  ButtonGroup,
   Button,
+  Heading,
+  Flex,
   FormControl,
+  GridItem,
   FormLabel,
   Input,
-  Stack,
+  Select,
+  SimpleGrid,
+  InputLeftAddon,
+  InputGroup,
+  Textarea,
+  FormHelperText,
+  InputRightElement,
   HStack,
+  Card,
+  InputLeftElement,
+  Tag,
+  TagCloseButton,
+  VStack,
+  Wrap,
+  WrapItem,
+  TagLabel,
 } from "@chakra-ui/react";
 
-type PostProjectProps = {
-  isOpen: boolean;
-  onClose: () => void;
-};
+import { useToast } from "@chakra-ui/react";
+import axios from "axios";
+import { useMutation } from "react-query";
 
-export default function PostProject({ isOpen, onClose }: PostProjectProps) {
-  function handleSubmit() {}
+const PostProject = () => {
+  const [show, setShow] = useState(false);
+  const [tagValue, setTagValue] = useState<string>("");
+  const [projectTags, setProjectTags] = useState<string[]>([]);
+  const [title, setTitle] = useState("");
+  const [candidates, setCandidates] = useState(0);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [description, setDescription] = useState("");
+
+  const handleAddTag = () => {
+    // console.log(tagValue);
+    setTagValue("");
+    if (/\S/.test(tagValue)) setProjectTags([...projectTags, tagValue]);
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    const updatedTags = projectTags.filter((projectTag) => projectTag !== tag);
+    setProjectTags(updatedTags);
+  };
+
+  async function postProjectData() {
+    const organization_id = JSON.parse(
+      localStorage.getItem("userData")
+    ).organization_id;
+
+    await axios.post("http://localhost:4000/api/projects", {
+      title,
+      domain: "Demo Project",
+      description,
+      startDate,
+      endDate,
+      organization: {
+        organization_id,
+      },
+    });
+  }
+
+  const { mutate, isLoading, isError, isSuccess, error } = useMutation(
+    postProjectData,
+    {
+      onSuccess: () => {
+        // Invalidate relevant queries after successful mutation
+        console.log("Success");
+      },
+      onError: (data) => {
+        console.log(`Error: ${data}`);
+      },
+    }
+  );
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    mutate();
+    // const formData = new FormData(e.target);
+    // const userData = Object.fromEntries(formData.entries());
+    // console.log(userData);
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader textAlign="center">Post Project</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={4}>
-              <FormControl id="name" isRequired>
-                <FormLabel>Name</FormLabel>
-                <Input type="text" />
-              </FormControl>
-              <HStack>
-                <FormControl id="domain" isRequired>
-                  <FormLabel>Domain</FormLabel>
-                  <Input type="text" />
-                </FormControl>
-                <FormControl id="category" isRequired>
-                  <FormLabel>Category</FormLabel>
-                  <Input type="text" />
-                </FormControl>
-              </HStack>
-              <FormControl id="no_of_candidates" isRequired>
-                <FormLabel>No. of candidates</FormLabel>
-                <Input type="number" />
-              </FormControl>
-              <HStack>
-                <FormControl id="appl_start_date" isRequired>
-                  <FormLabel>Application start date</FormLabel>
-                  <Input type="date" />
-                </FormControl>
-                <FormControl id="appl_end_date" isRequired>
-                  <FormLabel>Application end date</FormLabel>
-                  <Input type="date" />
-                </FormControl>
-              </HStack>
-              <HStack>
-                <FormControl id="project_start_date" isRequired>
-                  <FormLabel>Project start date</FormLabel>
-                  <Input type="date" />
-                </FormControl>
-                <FormControl id="project_end_date" isRequired>
-                  <FormLabel>Project end date</FormLabel>
-                  <Input type="date" />
-                </FormControl>
-              </HStack>
-            </Stack>
-          </form>
-        </ModalBody>
-
-        <ModalFooter justifyContent="center">
-          <Button
-            // variant="solid"
-            bg="blue.400"
-            color="white"
-            _hover={{
-              bg: "blue.500",
-            }}
-          >
-            Create Project
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+    <HStack
+      w="full"
+      h="full"
+      flexDirection="column"
+      paddingX="4"
+      marginX="4"
+      alignItems="start"
+      spacing={4}
+      marginY="0.5"
+    >
+      <Heading
+        as="h1"
+        size="xl"
+        mt={4}
+        mb={4}
+        fontWeight="bold"
+        textTransform="uppercase"
+      >
+        Post Project
+      </Heading>
+      <VStack
+        spacing={4}
+        as="form"
+        onSubmit={handleSubmit}
+        borderWidth="1px"
+        rounded={10}
+        p={5}
+      >
+        <FormControl isRequired>
+          <FormLabel htmlFor="title" fontWeight={"normal"}>
+            Title
+          </FormLabel>
+          <Input
+            id="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </FormControl>
+        <FormControl isRequired>
+          <FormLabel htmlFor="description" fontWeight={"normal"}>
+            Description
+          </FormLabel>
+          <Input
+            id="Domain"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </FormControl>
+        <HStack justifyContent="space-between" spacing={10} w="full">
+          <FormControl isRequired>
+            <FormLabel htmlFor="start-date" fontWeight={"normal"}>
+              Application Start Date
+            </FormLabel>
+            <Input
+              id="start-date"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </FormControl>
+          <FormControl isRequired>
+            <FormLabel htmlFor="end-date" fontWeight={"normal"}>
+              Application End Date
+            </FormLabel>
+            <Input
+              id="end-date"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </FormControl>
+        </HStack>
+        <FormControl isRequired>
+          <FormLabel htmlFor="candidates" fontWeight={"normal"}>
+            Initial No. of Candidates
+          </FormLabel>
+          <Input
+            id="candidates"
+            type="number"
+            value={candidates}
+            onChange={(e) => setCandidates(e.target.value)}
+          />
+        </FormControl>
+        <FormControl>
+          <FormLabel htmlFor="domain-tags" fontWeight={"normal"}>
+            Add Domain Tags
+          </FormLabel>
+          <InputGroup size="md">
+            <Input
+              id="domain-tags"
+              pr="4.5rem"
+              value={tagValue}
+              onChange={(e) => setTagValue(e.target.value)}
+            />
+            <InputRightElement w="4.5rem">
+              <Button
+                size="sm"
+                h="1.75rem"
+                colorScheme="blue"
+                onClick={handleAddTag}
+              >
+                Add +
+              </Button>
+            </InputRightElement>
+          </InputGroup>
+        </FormControl>
+        <Wrap borderWidth="1px" borderRadius={2} w="full" p={2} rounded={6}>
+          {projectTags.map((tag) => {
+            return (
+              <WrapItem id={tag}>
+                <Tag>
+                  <TagLabel>{tag}</TagLabel>
+                  <TagCloseButton onClick={() => handleRemoveTag(tag)} />
+                </Tag>
+              </WrapItem>
+            );
+          })}
+        </Wrap>
+        <Button type="submit" colorScheme="teal">
+          Submit
+        </Button>
+      </VStack>
+    </HStack>
   );
-}
+};
+
+export default PostProject;

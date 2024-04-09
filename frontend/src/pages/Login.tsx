@@ -9,31 +9,102 @@ import {
   Heading,
   Text,
   useColorModeValue,
-  Select,
+  // Select,
   Link as ChakraLink,
+  Spinner,
+  useToast,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+// import { useDispatch } from "react-redux";
 import { useNavigate, Link as ReactRouterLink } from "react-router-dom";
-import { createUser } from "../features/users/userSlice";
+// import { createUser } from "../features/users/userSlice";
+import axios from "axios";
+import { useMutation, useQueryClient } from "react-query";
+// import { useUser } from "../context/UserContext";
 
 export default function Login() {
-  const [userType, setUserType] = useState("");
-  const [name, setName] = useState("Nahshal Manir");
-  const [organization, setOrganization] = useState("TMSL");
+  // const [userType, setUserType] = useState("");
+  // const [name, setName] = useState("Nahshal Manir");
+  // const [organization, setOrganization] = useState("TMSL");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("+91 1234567890");
+  // const [phone, setPhone] = useState("+91 1234567890");
   const [password, setPassword] = useState("");
-  const [designation, setDesignation] = useState("Professor");
+  // const [designation, setDesignation] = useState("Professor");
 
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const toast = useToast();
 
-  function handleSubmit(e: React.FormEvent) {
+  async function postUserData() {
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/api/user/login",
+        {
+          email,
+          password,
+        }
+      );
+      console.log(response);
+      if (response.status === 200) {
+        return response.data.data;
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (error) {
+      toast({
+        title: error.response.data.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+      throw new Error("Error logging in");
+    }
+  }
+
+  const { mutate, isLoading, isSuccess } = useMutation(postUserData, {
+    onSuccess: (data) => {
+      console.log(data);
+      const { name, email, organization, phone } = data.user;
+      const { token } = data;
+      localStorage.setItem("authToken", token);
+
+      const { organization_id, designation } = organization;
+      localStorage.setItem(
+        "userData",
+        JSON.stringify({ name, email, phone, organization_id, designation })
+      );
+      const x = localStorage.getItem("userData");
+      console.log(x);
+      queryClient.invalidateQueries("userData");
+      navigate("/app/profile");
+    },
+  });
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    dispatch(
-      createUser(name, email, userType, designation, organization, phone)
+    try {
+      mutate();
+    } catch (error) {
+      console.error("mutate error");
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <Spinner
+        thickness="4px"
+        speed="0.65s"
+        emptyColor="gray.200"
+        color="blue.500"
+        size="xl"
+      />
     );
+  }
+
+  // console.log(isSuccess);
+  if (isSuccess) {
     navigate("/app");
   }
 
@@ -52,23 +123,13 @@ export default function Login() {
         </Flex>
         <Box
           rounded={"lg"}
+          // eslint-disable-next-line react-hooks/rules-of-hooks
           bg={useColorModeValue("white", "gray.700")}
           boxShadow={"lg"}
           p={8}
         >
           <form onSubmit={handleSubmit}>
             <Stack spacing={4}>
-              <FormControl id="user-type" isRequired>
-                <FormLabel>User Type</FormLabel>
-                <Select
-                  placeholder="Select User Type"
-                  value={userType}
-                  onChange={(e) => setUserType(e.target.value)}
-                >
-                  <option value="reasearcher">Researcher</option>
-                  <option value="collaborator">Collaborator</option>
-                </Select>
-              </FormControl>
               <FormControl id="email" isRequired>
                 <FormLabel>Email address</FormLabel>
                 <Input
@@ -89,11 +150,12 @@ export default function Login() {
                 <Stack>
                   <Button
                     type="submit"
-                    bg={"blue.400"}
-                    color={"white"}
-                    _hover={{
-                      bg: "blue.500",
-                    }}
+                    // bg={"blue.400"}
+                    // color={"white"}
+                    // _hover={{
+                    //   bg: "blue.500",
+                    // }}
+                    colorScheme="blue"
                   >
                     Sign in
                   </Button>
@@ -104,6 +166,7 @@ export default function Login() {
                     as={ReactRouterLink}
                     to="/signup"
                     color={"blue.400"}
+                    // colorScheme="blue"
                     textDecoration={"underline"}
                   >
                     Register Here

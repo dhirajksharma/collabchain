@@ -9,33 +9,75 @@ import {
   Heading,
   Text,
   useColorModeValue,
-  Select,
+  // Select,
   HStack,
   Link as ChakraLink,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { createUser } from "../features/users/userSlice";
+// import { createUser } from "../features/users/userSlice";
 import { useNavigate, Link as ReactRouterLink } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useMutation, useQueryClient } from "react-query";
+import axios from "axios";
 
 export default function Signup() {
-  const [userType, setUserType] = useState("");
+  // const [userType, setUserType] = useState("");
+  const [ethAddress, setEthAddress] = useState("");
   const [name, setName] = useState("");
   const [organization, setOrganization] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [aadhar, setAadhar] = useState("");
   const [password, setPassword] = useState("");
   const [designation, setDesignation] = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  function handleSubmit(e: React.FormEvent) {
+  async function postUserData() {
+    await axios.post("http://localhost:4000/api/user/register", {
+      name,
+      email,
+      phone,
+      aadhar,
+      ethAddress,
+      password,
+      organization: {
+        organization_id: null,
+        designation,
+      },
+    });
+  }
+
+  const { mutate, isLoading, isError, isSuccess, error } = useMutation(
+    postUserData,
+    {
+      onSuccess: () => {
+        // Invalidate relevant queries after successful mutation
+        queryClient.invalidateQueries("userData");
+      },
+    }
+  );
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    dispatch(
-      createUser(name, email, userType, designation, organization, phone)
-    );
+    const formData = new FormData(e.target);
+    const userData = Object.fromEntries(formData.entries());
+    mutate();
+  }
+
+  if (isLoading) {
+    return <span>Submitting...</span>;
+  }
+
+  if (isError) {
+    console.log(error);
+    return <span>Error: {error.message}</span>;
+  }
+
+  if (isSuccess) {
     navigate("/app");
   }
 
@@ -60,7 +102,7 @@ export default function Signup() {
         >
           <form onSubmit={handleSubmit}>
             <Stack spacing={4}>
-              <FormControl id="user-type" isRequired>
+              {/* <FormControl id="user-type" isRequired>
                 <FormLabel>User Type</FormLabel>
                 <Select
                   placeholder="Select User Type"
@@ -70,13 +112,49 @@ export default function Signup() {
                   <option value="Reasearcher">Researcher</option>
                   <option value="Collaborator">Collaborator</option>
                 </Select>
-              </FormControl>
+              </FormControl> */}
               <FormControl id="name" isRequired>
                 <FormLabel>Name</FormLabel>
                 <Input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                />
+              </FormControl>
+              {/* <FormControl id="updated_cv" isRequired isDisabled>
+                <FormLabel>Updated CV</FormLabel>
+                <Input type="file" />
+              </FormControl> */}
+              <FormControl id="email" isRequired>
+                <FormLabel>Email address</FormLabel>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </FormControl>
+              <FormControl id="phone" isRequired>
+                <FormLabel>Phone No.</FormLabel>
+                <Input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </FormControl>
+              <FormControl id="aadhar" isRequired>
+                <FormLabel>Aadhar No.</FormLabel>
+                <Input
+                  type="number"
+                  value={aadhar}
+                  onChange={(e) => setAadhar(e.target.value)}
+                />
+              </FormControl>
+              <FormControl id="ethAddr" isRequired>
+                <FormLabel>Ethereum Address</FormLabel>
+                <Input
+                  type="string"
+                  value={ethAddress}
+                  onChange={(e) => setEthAddress(e.target.value)}
                 />
               </FormControl>
               <HStack>
@@ -97,26 +175,6 @@ export default function Signup() {
                   />
                 </FormControl>
               </HStack>
-              <FormControl id="updated_cv" isRequired isDisabled>
-                <FormLabel>Updated CV</FormLabel>
-                <Input type="file" />
-              </FormControl>
-              <FormControl id="email" isRequired>
-                <FormLabel>Email address</FormLabel>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </FormControl>
-              <FormControl id="phone" isRequired>
-                <FormLabel>Phone No.</FormLabel>
-                <Input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </FormControl>
               <HStack>
                 <FormControl id="password" isRequired>
                   <FormLabel>Password</FormLabel>
