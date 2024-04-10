@@ -67,7 +67,7 @@ const PostProject = () => {
       startDate,
       endDate,
       organization: {
-        organization_id,
+        id: organization_id,
       },
     });
   }

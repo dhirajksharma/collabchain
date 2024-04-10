@@ -63,12 +63,24 @@ export default function Login() {
     }
   }
 
+  const setCookie = (name: string, value: string, days: number): void => {
+    let expires = "";
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+      expires = `; expires=${date.toUTCString()}`;
+    }
+    // document.cookie = `${name}=${value || ""}${expires}; path=/`;
+    document.cookie = `token=${value}; path=/; max-age=604800; SameSite=None; Secure`;
+    console.log(document.cookie);
+  };
   const { mutate, isLoading, isSuccess } = useMutation(postUserData, {
     onSuccess: (data) => {
       console.log(data);
       const { name, email, organization, phone } = data.user;
       const { token } = data;
       localStorage.setItem("authToken", token);
+      setCookie("token", token, 7); // Set the cookie with a lifespan of 7 days
 
       const { organization_id, designation } = organization;
       localStorage.setItem(
