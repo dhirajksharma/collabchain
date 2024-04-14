@@ -1,6 +1,6 @@
 const express = require("express");
 const { isAuthenticatedUser} = require("../middleware/auth");
-const { addTaskContributor, removeTaskContributor, getAllProjects, createProject, getProjectDetails, editProject, applyToProject, withdrawApplication, updateMenteeStatus, addTask, uploadTaskWork, getAssignedTasks, markTaskComplete } = require("../controllers/projectController");
+const { addTaskContributor, removeTaskContributor, getAllProjects, createProject, getProjectDetails, editProject, applyToProject, withdrawApplication, updateMenteeStatus, addTask, uploadTaskWork, getAssignedTasks, markTaskComplete, saveProject } = require("../controllers/projectController");
 const router = express.Router();
 router.use(isAuthenticatedUser);
 
@@ -11,6 +11,7 @@ router.route("/")
 router.route("/:projectid")
     .get(getProjectDetails) //users get project details (some details hidden based on type of user: public, mentor, mentee)
     .post(editProject) //mentor edits his project details
+    .put(saveProject) //user saves project to his list
 
 router.route("/:projectid/apply")
     .post(applyToProject) //users applying to a project

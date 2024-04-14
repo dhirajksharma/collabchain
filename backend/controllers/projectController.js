@@ -105,6 +105,27 @@ exports.editProject = catchAsyncErrors(async (req, res, next) => {
   return res.status(201).json(new ApiResponse(201, project, "Project found"));
 });
 
+// User saves project to watchlist
+exports.saveProject = catchAsyncErrors(async (req, res, next) =>{
+  const projectId = req.params.projectid;
+  let usr = await User.findById(req.user.id);
+  
+  let indx = usr.projects_saved.indexOf(projectId);
+  if(indx>-1)
+    usr.projects_saved.splice(indx, 1);
+  else
+    usr.projects_saved.push(projectId);
+
+  await usr.save();
+  await usr.populate('projects_saved projects_ongoing projects_completed','title description');
+  await usr.populate('organization.organization_details')
+
+  if(indx>-1)
+    return res.status(201).json(new ApiResponse(201, usr, "Project removed successfully"));
+  else
+  return res.status(201).json(new ApiResponse(201, usr, "Project saved successfully"));
+})
+
 // Users applying to a project
 exports.applyToProject = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
@@ -148,13 +169,17 @@ exports.updateMenteeStatus = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("You are not authorized to access this page",403));
   }
   let newMenteesList = req.body.menteesList;
-  newMenteesList.forEach(application => {
+  newMenteesList.forEach(async (application) => {
     if (application.status === "approved" && project.menteesRequired>0) {
       project.menteesRequired=project.menteesRequired-1;
       project.menteesApproved.push({
         userId: application.userId,
         name: application.name
       })
+
+      const usr = await User.findById(application.userId);
+      usr.project_ongoing.push(projectId);
+      await usr.save();
     }
   })
 
