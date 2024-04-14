@@ -25,12 +25,15 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
         }
         
         req.body.organization={
-            organization_id: orgId,
+            organization_details: orgId,
             designation: req.body.organization.designation
         }
         const user = await User.create({
             ...req.body
         });
+
+        await user.populate('projects_saved projects_ongoing projects_completed','title description');
+        await user.populate('organization.organization_details')
     
         sendToken(user, 201, res);
     }else{
@@ -60,6 +63,9 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHander("Invalid email or password", 401));
     }
 
+    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('organization.organization_details')
+    
     sendToken(user, 200, res);
 });
 
@@ -135,12 +141,18 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 
     await user.save();
 
+    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('organization.organization_details')
+
     sendToken(user, 200, res);
 });
 
 // Get User Detail
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user.id);
+
+    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('organization.organization_details')
 
     if(!user){
         return next(new ErrorHander("User not found", 400));
@@ -170,6 +182,9 @@ exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
     user.password = req.body.newPassword;
     await user.save();
 
+    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('organization.organization_details')
+
     sendToken(user, 200, res);
 });
 
@@ -181,6 +196,9 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
         useFindAndModify: false,
     });
 
+    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('organization.organization_details')
+    
     res.status(200).json(new ApiResponse(200, user));
 });
 
