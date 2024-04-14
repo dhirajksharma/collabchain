@@ -60,12 +60,9 @@ const projectSchema= new mongoose.Schema({
     },
     menteesApplication:[
         {
-            userId:{
+            user:{
                 type:mongoose.Schema.ObjectId,
                 ref:"User",
-            },
-            name:{
-                type:String,
             },
             status:{
                 type:String,
@@ -75,12 +72,9 @@ const projectSchema= new mongoose.Schema({
     ],
     menteesApproved:[
         {
-            userId:{
+            user:{
                 type:mongoose.Schema.ObjectId,
                 ref:"User",
-            },
-            name:{
-                type:String,
             },
             assignedTaskIds:{
                 type:[String],
@@ -110,13 +104,8 @@ const projectSchema= new mongoose.Schema({
             },
             menteesAssigned:[
                 {
-                    userId:{
-                        type:mongoose.Schema.ObjectId,
-                        ref:"User",
-                    },
-                    name:{
-                        type:String,
-                    },
+                    type:mongoose.Schema.ObjectId,
+                    ref:"User",
                 }
             ],
             mentorProvidedDocuments:[
