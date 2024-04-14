@@ -71,6 +71,8 @@ exports.createProject = catchAsyncErrors(async (req, res, next) => {
     //   projectId: project._id;
     // });
 
+    await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
+    
     res.status(201).json(new ApiResponse(201, project, "Project made successfully"));
   } catch (error) {
     if (project && project._id) {
@@ -90,6 +92,8 @@ exports.getProjectDetails = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
+  await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
+    
   return res.status(201).json(new ApiResponse(201, project, "Project found"));
 });
 
@@ -106,6 +110,8 @@ exports.editProject = catchAsyncErrors(async (req, res, next) => {
   if (!project) {
     return next(new ErrorHander("Project not found", 400));
   }
+
+  await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
 
   return res.status(201).json(new ApiResponse(201, project, "Project found"));
 });
@@ -140,9 +146,10 @@ exports.applyToProject = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
-  project.menteesApplication.push(req.body);
+  project.menteesApplication.push({user: req.user.id});
   await project.save();
-
+  await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
+  
   return res.status(201).json(new ApiResponse(201, project, "Application successful"));
 });
 
@@ -155,41 +162,42 @@ exports.withdrawApplication = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
-  project.menteesApplication = project.menteesApplication.filter((application) => application.userId != req.user.id);
+  project.menteesApplication = project.menteesApplication.filter((application) => (application.user != req.user.id || (application.user == req.user.id && application.status != 'pending')));
   await project.save();
-
+  await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
+  
   return res.status(201).json(new ApiResponse(201, project, "Application withdrawn"));
 });
 
 // Mentor updates mentee status
 exports.updateMenteeStatus = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
+  const userId = req.params.userid;
   const project = await Project.findById(projectId);
+  const usr = await User.findById(userId);
 
   if (!project) {
     return next(new ErrorHander("Project not found", 400));
   }
 
-  if (req.user.id != project.mentor) {
-    return next(new ErrorHander("You are not authorized to access this page", 403));
+  if (!usr) {
+    return next(new ErrorHander("Mentee not found", 400));
   }
-  let newMenteesList = req.body.menteesList;
-  newMenteesList.forEach(async (application) => {
-    if (application.status === "approved" && project.menteesRequired>0) {
-      project.menteesRequired=project.menteesRequired-1;
-      project.menteesApproved.push({
-        userId: application.userId,
-        name: application.name
-      })
 
-      const usr = await User.findById(application.userId);
-      usr.project_ongoing.push(projectId);
-      await usr.save();
-    }
+  if(req.user.id != project.mentor){
+    return next(new ErrorHander("You are not authorized to access this page",403));
+  }
+
+  usr.projects_ongoing.push(projectId);
+  await usr.save();
+  
+  project.menteesRequired-=1;
+  project.menteesApproved.push({
+    user: userId,
   })
-
-  project.menteesApplication = newMenteesList;
+  project.menteesApplication = project.menteesApplication.filter(application => application.user != userId);
   await project.save();
+  await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
 
   return res.status(201).json(new ApiResponse(201, project, "Status updated"));
 });
@@ -221,6 +229,7 @@ exports.addTask = catchAsyncErrors(async (req, res, next) => {
     await createTask(projectId, taskId, mentorAddress);
     project.tasks.push(task);
     await project.save();
+    await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
 
     return res.status(201).json(new ApiResponse(201, project, "Task added successfully"));
   } catch (error) {
@@ -232,35 +241,37 @@ exports.addTask = catchAsyncErrors(async (req, res, next) => {
 exports.addTaskContributor = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
   const taskId = req.params.taskid;
+  const userId = req.params.userid;
   const project = await Project.findById(projectId);
+  const mentee = await User.findById(userId);
 
   if (!project) {
     return next(new ErrorHander("Project not found", 400));
   }
 
-  if (req.user.id != project.mentor) {
-    return next(new ErrorHander("You are not authorized to access this page", 403));
+  if (!mentee) {
+    return next(new ErrorHander("Mentee not found", 400));
+  }
+
+  if(req.user.id!=project.mentor){
+    return next(new ErrorHander("You are not authorized to access this page",403));
   }
 
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
-
-  project.tasks[taskIndex].menteesAssigned.push({
-    userId: req.body.userId,
-    name: req.body.name
-  });
-
-  const menteeId = project.menteesApproved.findIndex(currMentee => currMentee.userId == req.body.userId)
-
+  project.tasks[taskIndex].menteesAssigned.push(userId);
+  
+  const menteeId=project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
+  
   project.menteesApproved[menteeId].assignedTaskIds.push(taskId);
   if (project.tasks[taskIndex].taskStatus === 'pending')
     project.tasks[taskIndex].taskStatus = 'active';
 
   const mentorAddress = req.user.ethAddress;
-  candidate = await User.findById(project.menteesApproved[menteeId].userId).select({ ethAddress: 1 })
 
-  try {
-    await assignUser(projectId, taskId, candidate.ethAddress, mentorAddress);
+  try{
+    await assignUser(projectId, taskId, mentee.ethAddress, mentorAddress);
     await project.save();
+    await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
     return res.status(201).json(new ApiResponse(201, project, "Task assigned successfully"));
   } catch (error) {
     return next(new ErrorHander("Server Error", 500));
@@ -271,32 +282,38 @@ exports.addTaskContributor = catchAsyncErrors(async (req, res, next) => {
 exports.removeTaskContributor = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
   const taskId = req.params.taskid;
+  const userId = req.params.userid;
   const project = await Project.findById(projectId);
+  const mentee = await User.findById(userId);
 
   if (!project) {
     return next(new ErrorHander("Project not found", 400));
   }
 
-  if (req.user.id != project.mentor) {
-    return next(new ErrorHander("You are not authorized to access this page", 403));
+  if (!mentee) {
+    return next(new ErrorHander("Mentee not found", 400));
+  }
+
+  if(req.user.id!=project.mentor){
+    return next(new ErrorHander("You are not authorized to access this page",403));
   }
 
   const mentorAddress = req.user.ethAddress;
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
-
-  project.tasks[taskIndex].menteesAssigned = project.tasks[taskIndex].menteesAssigned.filter(mentee => { mentee.userId !== req.body.removeUserId })
-
-  const menteeId = project.menteesApproved.findIndex(currMentee => currMentee.userId == req.body.removeUserId)
-  candidate = await User.findById(project.menteesApproved[menteeId].userId).select({ ethAddress: 1 })
-
+  
+  project.tasks[taskIndex].menteesAssigned = project.tasks[taskIndex].menteesAssigned.filter(mentee => { mentee.user !== userId })
+  
+  const menteeId=project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
   project.menteesApproved[menteeId].assignedTaskIds = project.menteesApproved[menteeId].assignedTaskIds.filter(taskID => { taskID !== taskId })
 
   if (project.tasks[taskIndex].menteesAssigned.length === 0)
     project.tasks[taskIndex].taskStatus = 'pending';
 
-  try {
-    await removeUser(projectId, taskId, candidate.ethAddress, mentorAddress);
+  try{
+    await removeUser(projectId, taskId, mentee.ethAddress, mentorAddress);
     await project.save();
+    await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
+
     return res.status(201).json(new ApiResponse(201, project, "Task unassigned"));
   } catch (error) {
     return next(new ErrorHander("Server Error", 500));
@@ -351,9 +368,7 @@ exports.getAssignedTasks = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
-  const mentee = project.menteesApproved.find(mentee => mentee.userId == req.user.id)
-  console.log(project.menteesApproved)
-  console.log(req.user.id)
+  const mentee = project.menteesApproved.find(mentee => mentee.user == req.user.id)
   const menteeTasks = mentee.assignedTaskIds.map(taskId => {
     return project.tasks.find(ele => ele.id === taskId)
   })

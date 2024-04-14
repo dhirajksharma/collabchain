@@ -17,15 +17,17 @@ router.route("/:projectid/apply")
     .post(applyToProject) //users applying to a project
     .delete(withdrawApplication) //users withdrawing their application
 
-router.route("/:projectid/updatementeestatus")
+router.route("/:projectid/updatementeestatus/:userid")
     .post(updateMenteeStatus) //mentor updates mentee status of applicants
 
 router.route("/:projectid/tasks")
     .post(addTask) //mentor adds new task to the project
 
-router.route("/:projectid/tasks/:taskid")
+router.route("/:projectid/tasks/:taskid/:userid")
     .post(addTaskContributor) //add contributors to the task
     .delete(removeTaskContributor) //remove contributor from the task
+
+router.route("/:projectid/tasks/:taskid")
     .put(uploadTaskWork) //selected mentees upload their work
 
 router.route("/:projectid/mytasks")
