@@ -40,7 +40,7 @@ const userSchema= new mongoose.Schema({
         select:false,
     },
     organization:{
-        organization_id:{
+        organization_details:{
             type: mongoose.Schema.ObjectId,
             ref:"Organization",
         },
@@ -48,10 +48,12 @@ const userSchema= new mongoose.Schema({
             type:String
         }
     },
-    project_ongoing:{
-        type: mongoose.Schema.ObjectId,
-        ref:"Project",
-    },
+    projects_ongoing:[
+        {
+            type: mongoose.Schema.ObjectId,
+            ref:"Project",
+        }
+    ],
     projects_completed:[
         {
             type: mongoose.Schema.ObjectId,
