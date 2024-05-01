@@ -10,25 +10,25 @@ const path = require("path");
 
 // Register a User
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
-    const userExists = await User.findOne({ email: req.body.email });
-
-    if (!userExists) {
-        let orgId = req.body.organization.organization_id;
-        if (orgId == null) {
-            let org = await Organization.create({
+    const userExists = await User.findOne({email: req.body.email});
+    
+    if(!userExists){
+        let org = await Organization.findOne({email: req.body.organization.email});
+        if (!org) {
+            org = await Organization.create({
                 name: req.body.organization.name,
                 email: req.body.organization.email,
                 address: req.body.organization.address
             });
-            orgId = org._id;
         }
         
+        let orgId = org._id;
         req.body.organization={
             organization_details: orgId,
             designation: req.body.organization.designation
         }
         const user = await User.create({
-            ...req.body
+            ...req.body,
         });
 
         await user.populate('projects_saved projects_ongoing projects_completed','title description');
@@ -189,6 +189,22 @@ exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
 
 // update User Profile
 exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
+    if(req.body.organization) {
+        let org = await Organization.findOne({email: req.body.organization.email});
+        if (!org) {
+            org = await Organization.create({
+                name: req.body.organization.name,
+                email: req.body.organization.email,
+                address: req.body.organization.address
+            });
+        }
+
+        let orgId = org._id;
+        req.body.organization={
+            organization_details: orgId,
+            designation: req.body.organization.designation
+        }
+    }
     const user = await User.findByIdAndUpdate(req.user.id, req.body, {
         new: true,
         runValidators: true,
