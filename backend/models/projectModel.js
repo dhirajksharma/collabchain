@@ -13,6 +13,11 @@ const projectSchema= new mongoose.Schema({
     startDate:{
         type:Date,
     },
+    token:{
+        type:Number,
+        default:0,
+        required:true
+    },
     endDate:{
         type:Date,
         default: new Date("2099-12-12")
@@ -88,6 +93,10 @@ const projectSchema= new mongoose.Schema({
             },
             title:{
                 type:String,
+            },
+            token:{
+                type:Number,
+                default:0
             },
             description:{
                 type:String,

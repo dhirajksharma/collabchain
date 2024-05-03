@@ -39,6 +39,10 @@ const userSchema= new mongoose.Schema({
         minLength:[6,"Password cannot have less than 6 characters"],
         select:false,
     },
+    token:{
+        type:Number,
+        default:0
+    },
     organization:{
         organization_details:{
             type: mongoose.Schema.ObjectId,
