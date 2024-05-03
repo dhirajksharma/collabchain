@@ -56,6 +56,7 @@ exports.createProject = catchAsyncErrors(async (req, res, next) => {
       organization: orgId,
       title: req.body.title,
       domain: req.body.domain,
+      token: req.body.token,
       description: req.body.description,
       startDate: req.body.startDate,
       endDate: req.body.endDate
@@ -215,11 +216,16 @@ exports.addTask = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("You are not authorized to access this page", 403));
   }
 
+  if(req.body.token<=0 || req.body.token>project.token){
+    return next(new ErrorHander("Invalid Token Count",403));
+  }
+  
   let taskId = projectId + project.tasks.length;
   const mentorAddress = req.user.ethAddress;
   let task = {
     title: req.body.title,
     description: req.body.description,
+    token: req.body.token,
     priority: req.body.priority,
     dueDate: req.body.dueDate,
     id: taskId,
@@ -228,6 +234,8 @@ exports.addTask = catchAsyncErrors(async (req, res, next) => {
   try {
     await createTask(projectId, taskId, mentorAddress);
     project.tasks.push(task);
+    project.token-=req.body.token;
+
     await project.save();
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
 
@@ -392,8 +400,16 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
   }
 
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
-  project.tasks[taskIndex].taskStatus = 'complete';
+  project.tasks[taskIndex].taskStatus='complete';
+  
 
+  let eachToken = project.tasks[taskIndex].token/project.tasks[taskIndex].menteesAssigned.length;
+  project.tasks[taskIndex].menteesAssigned.forEach(async id => {
+    let user = await User.findById(id);
+    user.token+=eachToken;
+    await user.save();
+  })
+  
   const verificationKey = req.body.verificationKey;
   const mentorAddress = req.user.ethAddress;
 
