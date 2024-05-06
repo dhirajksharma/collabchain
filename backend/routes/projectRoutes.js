@@ -22,7 +22,10 @@ router.route("/:projectid/updatementeestatus/:userid")
 
 router.route("/:projectid/tasks")
     .post(addTask) //mentor adds new task to the project
-
+    
+router.route("/:projectid/tasks/:taskid/markcomplete")
+    .post(markTaskComplete) //mentor marks the task complete with key
+    
 router.route("/:projectid/tasks/:taskid/:userid")
     .post(addTaskContributor) //add contributors to the task
     .delete(removeTaskContributor) //remove contributor from the task
@@ -33,7 +36,5 @@ router.route("/:projectid/tasks/:taskid")
 router.route("/:projectid/mytasks")
     .get(getAssignedTasks) //selected mentees get their assigned tasks
 
-router.route("/:projectid/tasks/:taskid/markcomplete")
-    .post(markTaskComplete) //mentor marks the task complete with key
 
 module.exports = router;
