@@ -52,6 +52,12 @@ const userSchema= new mongoose.Schema({
             type:String
         }
     },
+    projects_applied:[
+        {
+            type: mongoose.Schema.ObjectId,
+            ref:"Project",
+        }
+    ],
     projects_ongoing:[
         {
             type: mongoose.Schema.ObjectId,
