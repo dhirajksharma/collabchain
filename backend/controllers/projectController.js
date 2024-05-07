@@ -142,13 +142,12 @@ exports.saveProject = catchAsyncErrors(async (req, res, next) =>{
 exports.applyToProject = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
   const project = await Project.findById(projectId);
-  const user = await User.findById(req.user.id);
+
   if (!project) {
     return next(new ErrorHander("Project not found", 400));
   }
 
   project.menteesApplication.push({user: req.user.id});
-  user.projects_applied.push(projectId);
   await project.save();
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
   
