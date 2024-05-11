@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { createContext, useContext, useState, FC } from "react";
+import { useCookies } from "react-cookie";
 import { useMutation } from "react-query";
 
 interface User {
@@ -11,6 +12,7 @@ interface User {
 }
 
 interface UserContextProps {
+  userData: unknown;
   isLoggedIn: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -22,20 +24,23 @@ interface UserProviderProps {
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);
 
-const setToken = (token: string) => {
-  localStorage.setItem("token", token);
-};
-
-const removeToken = () => {
-  localStorage.removeItem("token");
-};
-
 export const UserProvider: FC<UserProviderProps> = ({ children }) => {
   const [userData, setUserData] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const token = localStorage.getItem("token");
     return Boolean(token);
   });
+
+  const [cookies, setCookie] = useCookies(["token"]);
+
+  const setToken = (token: string) => {
+    localStorage.setItem("token", token);
+    setCookie("token", token, { path: "/" });
+  };
+
+  const removeToken = () => {
+    localStorage.removeItem("token");
+  };
 
   const loginMutation = useMutation(
     async ({ email, password }: { email: string; password: string }) => {
@@ -46,7 +51,7 @@ export const UserProvider: FC<UserProviderProps> = ({ children }) => {
       );
       const { token, user } = response.data.data;
       // const { token } = response.data;
-      console.log(user);
+      console.log(response.data.data);
       const { name, organization, phone: contact } = user;
       setToken(token);
       const { designation: profession, organization_id } = organization;

@@ -1,6 +1,8 @@
 import axios from "axios";
 import { useMutation, useQueryClient } from "react-query";
 
+axios.defaults.withCredentials = true;
+
 interface ProfileFormData {
   name: string;
   email: string;

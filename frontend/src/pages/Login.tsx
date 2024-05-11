@@ -19,22 +19,22 @@ import { useState } from "react";
 import { useNavigate, Link as ReactRouterLink } from "react-router-dom";
 // import { createUser } from "../features/users/userSlice";
 import axios from "axios";
-import { useMutation, useQueryClient } from "react-query";
-// import { useUser } from "../context/UserContext";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useCookies } from "react-cookie";
+import { useUser } from "../context/UserContext";
+import MyToast from "../components/MyToast";
+
+axios.defaults.withCredentials = true;
 
 export default function Login() {
-  // const [userType, setUserType] = useState("");
-  // const [name, setName] = useState("Nahshal Manir");
-  // const [organization, setOrganization] = useState("TMSL");
   const [email, setEmail] = useState("");
-  // const [phone, setPhone] = useState("+91 1234567890");
   const [password, setPassword] = useState("");
-  // const [designation, setDesignation] = useState("Professor");
 
   // const dispatch = useDispatch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const [cookies, setCookie] = useCookies(["token"]);
 
   async function postUserData() {
     try {
@@ -45,7 +45,6 @@ export default function Login() {
           password,
         }
       );
-      console.log(response);
       if (response.status === 200) {
         return response.data.data;
       } else {
@@ -63,41 +62,31 @@ export default function Login() {
     }
   }
 
-  const setCookie = (name: string, value: string, days: number): void => {
-    let expires = "";
-    if (days) {
-      const date = new Date();
-      date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-      expires = `; expires=${date.toUTCString()}`;
-    }
-    // document.cookie = `${name}=${value || ""}${expires}; path=/`;
-    document.cookie = `token=${value}; path=/; max-age=604800; SameSite=None; Secure`;
-    console.log(document.cookie);
-  };
   const { mutate, isLoading, isSuccess } = useMutation(postUserData, {
     onSuccess: (data) => {
-      console.log(data);
       const { name, email, organization, phone } = data.user;
       const { token } = data;
-      localStorage.setItem("authToken", token);
-      setCookie("token", token, 7); // Set the cookie with a lifespan of 7 days
+      // localStorage.setItem("authToken", token);
+      setCookie("token", token, { path: "/" });
 
       const { organization_id, designation } = organization;
       localStorage.setItem(
         "userData",
         JSON.stringify({ name, email, phone, organization_id, designation })
       );
-      const x = localStorage.getItem("userData");
-      console.log(x);
-      queryClient.invalidateQueries("userData");
-      navigate("/app/profile");
+
+      navigate("/app/profile", { state: { isAuthenticated: true } });
     },
   });
+
+  const { login, userData } = useUser();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
       mutate();
+      // login(email, password);
+      // console.log(userData);
     } catch (error) {
       console.error("mutate error");
     }

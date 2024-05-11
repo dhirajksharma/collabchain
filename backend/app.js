@@ -23,11 +23,11 @@ app.set("io", io); // using set method to mount the `io` instance on the app to 
 
 app.use(express.json())
 app.use(cookieParser())
-// app.use(cors({
-//     origin:`${process.env.FRONTEND}`,
-//     credentials:true
-// }))
-app.use(cors());
+app.use(cors({
+  origin: `${process.env.FRONTEND}`,
+  credentials: true
+}))
+// app.use(cors());
 app.use(fileUpload());
 
 //Route imports

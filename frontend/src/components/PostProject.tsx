@@ -121,6 +121,7 @@ const PostProject = () => {
         borderWidth="1px"
         rounded={10}
         p={5}
+        w="50%"
       >
         <FormControl isRequired>
           <FormLabel htmlFor="title" fontWeight={"normal"}>
