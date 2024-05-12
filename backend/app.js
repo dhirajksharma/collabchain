@@ -8,6 +8,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { initializeSocketIO } = require("./socket/index.js");
 dotenv.config();
+const path = require('path');
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -21,6 +22,7 @@ const io = new Server(httpServer, {
 
 app.set("io", io); // using set method to mount the `io` instance on the app to avoid usage of `global`
 
+app.use('/uploads', express.static(path.join(__dirname,'uploads')));
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({

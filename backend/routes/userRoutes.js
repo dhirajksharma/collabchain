@@ -36,8 +36,8 @@ router.route("/verifymail/:token")
     .post(verifyEmail) //users verify their email
 router.route("/logout")
     .get(logout) //users log out of the platform
-router.route("/uploads/:userid")
-    .get(getFile) //retreive the file from the server type=avatar or resume
-    .post(uploadFile) //user uploads file to the server type=avatar or resume
+router.route("/uploads/:filetype/:userid")
+    .get(getFile) //retreive the file from the server
+    .post(uploadFile) //user uploads file to the server
 
 module.exports=router;

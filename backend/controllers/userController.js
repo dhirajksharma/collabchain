@@ -7,6 +7,7 @@ const sendToken = require("../utils/jwtToken");
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
 const path = require("path");
+const fs = require('fs').promises;
 
 // Register a User
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
@@ -278,26 +279,27 @@ exports.verifyEmail = catchAsyncErrors(async (req, res, next) => {
 
 //User uploads his resume or pic
 exports.uploadFile = catchAsyncErrors(async (req, res, next) => {
+    const filetype = req.params.filetype;
     const userId = req.params.userid;
     const user = await User.findById(userId);
 
     if (!user) {
         return next(new ErrorHander("User not found", 400));
     }
-
-    const filetype = req.body.type;
+  
     const file = req.files.file;
-
-    file.mv(`./uploads/${filetype}/` + userId, function (err) {
-        if (err) {
-            return next(new ErrorHander("Upload failed", 401));
-        } else {
-            return res.status(201).json(new ApiResponse(201, null, "upload successful"));
-        }
+    
+    file.mv(`./uploads/${filetype}/${userId}.${file.mimetype.substring(file.mimetype.lastIndexOf('/')+1)}`, function(err){
+      if (err) {
+        return next(new ErrorHander("Upload failed", 401));
+      }else{
+        return res.status(201).json(new ApiResponse(201, null, "upload successful"));
+      }
     })
 });
 
 exports.getFile = catchAsyncErrors(async (req, res, next) => {
+    const filetype = req.params.filetype;
     const userId = req.params.userid;
     const user = await User.findById(userId);
 
@@ -305,12 +307,19 @@ exports.getFile = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHander("User not found", 400));
     }
 
-    const filetype = req.body.type;
-    const filePath = path.join(__dirname, `../uploads/${filetype}/${userId}`);
+    const directoryPath = path.join(__dirname, `../uploads/${filetype}`);
 
-    res.sendFile(filePath, (err) => {
-        if (err) {
-            res.status(404).send('File not found');
+    try {
+        const files = await fs.readdir(directoryPath);
+        const file = files.find(f => path.parse(f).name === userId);
+        
+        if (!file) {
+            return res.status(404).send('File not found');
         }
-    });
+
+        const filePath = path.join(directoryPath, file);
+        res.sendFile(filePath);
+    } catch (err) {
+        return next(err);
+    }
 });
