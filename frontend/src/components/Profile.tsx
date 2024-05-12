@@ -1,48 +1,12 @@
-import {
-  Avatar,
-  Box,
-  Button,
-  Flex,
-  FormErrorMessage,
-  HStack,
-  Heading,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
-import { useAppSelector } from "../app/hooks";
-import { useUser } from "../context/UserContext";
-import {
-  Table,
-  Thead,
-  Tbody,
-  Tfoot,
-  Tr,
-  Th,
-  Td,
-  TableCaption,
-  TableContainer,
-} from "@chakra-ui/react";
-import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  FormControl,
-  FormLabel,
-  Input,
-} from "@chakra-ui/react";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { Button, HStack, Heading } from "@chakra-ui/react";
+import { Table, Tbody, Tr, Td, TableContainer } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import useUpdateProfile from "../hooks/useUpdateProfile";
-import { EditIcon } from "@chakra-ui/icons";
 import { ProfilePhoto } from "./ProfilePhoto";
 import axios from "axios";
 import { useQuery } from "react-query";
 import Loader from "./Loader";
 import UpdateProfileModal from "./UpdateProfileModal";
+import UpdatePasswordModal from "./UpdatePasswordModal";
 
 axios.defaults.withCredentials = true;
 
@@ -54,14 +18,7 @@ interface UserData {
   phone: string;
 }
 
-interface ProfileFormData {
-  name: string;
-  email: string;
-  phone: string;
-}
-
 export default function Profile() {
-  const [userData, setUserData] = useState<UserData | null>(null);
   const [isProfileUpdated, setIsProfileUpdated] = useState<boolean>(false);
 
   const fetchUserDetails = async () => {
@@ -74,13 +31,7 @@ export default function Profile() {
     isLoading,
     isSuccess,
     refetch,
-  } = useQuery("userData", fetchUserDetails, {
-    onSuccess: (data) => {
-      const { name, email, organization, phone } = data.data;
-      const { organization_id, designation } = organization;
-      setUserData({ name, email, organization_id, designation, phone });
-    },
-  });
+  } = useQuery("userData", fetchUserDetails);
 
   useEffect(() => {
     if (isProfileUpdated) refetch();
@@ -95,29 +46,14 @@ export default function Profile() {
   const closeModal = () => {
     setIsModalOpen(false);
   };
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  const [isHovered, setIsHovered] = useState(false);
-  const [image, setImage] = useState<string | null>(null);
-
-  const handleHover = () => {
-    setIsHovered(true);
+  const openPasswordModal = () => {
+    setIsPasswordModalOpen(true);
   };
 
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
-
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const imageDataUrl = reader.result as string;
-        setImage(imageDataUrl);
-        // Here you can send the imageDataUrl to your backend for updating the profile photo
-      };
-      reader.readAsDataURL(file);
-    }
+  const closePasswordModal = () => {
+    setIsPasswordModalOpen(false);
   };
 
   if (isLoading) {
@@ -126,8 +62,14 @@ export default function Profile() {
 
   if (isSuccess) {
     const { name, email, organization, phone } = queryData.data;
-    const { organization_id, designation } = organization;
-    const updateUserData = { name, email, organization_id, phone, designation };
+    const { designation, organization_details } = organization;
+    const updateUserData = {
+      name,
+      email,
+      phone,
+      designation,
+      organization_details,
+    };
 
     return (
       <>
@@ -151,7 +93,7 @@ export default function Profile() {
           >
             Profile Page
           </Heading>
-          <ProfilePhoto userName={userData?.name} />
+          <ProfilePhoto userName={name} userId={queryData.data._id} />
           <TableContainer
             w="80%"
             border="1px"
@@ -163,39 +105,56 @@ export default function Profile() {
                 <Tr>
                   <Td>Name</Td>
                   <Td fontWeight="semibold" fontSize="lg">
-                    {userData?.name}
+                    {name}
                   </Td>
                 </Tr>
                 <Tr>
                   <Td>Email ID</Td>
                   <Td fontWeight="semibold" fontSize="lg">
-                    {userData?.email}
+                    {email}
                   </Td>
                 </Tr>
                 <Tr>
                   <Td>Contact</Td>
                   <Td fontWeight="semibold" fontSize="lg">
-                    {userData?.phone}
+                    {phone}
                   </Td>
                 </Tr>
                 <Tr>
                   <Td>Organization</Td>
                   <Td fontWeight="semibold" fontSize="lg">
-                    {userData?.organization_id}
+                    {organization_details.name}
+                  </Td>
+                </Tr>
+                <Tr>
+                  <Td>Organization Email</Td>
+                  <Td fontWeight="semibold" fontSize="lg">
+                    {organization_details.email}
+                  </Td>
+                </Tr>
+                <Tr>
+                  <Td>Organization Address</Td>
+                  <Td fontWeight="semibold" fontSize="lg">
+                    {organization_details.address}
                   </Td>
                 </Tr>
                 <Tr>
                   <Td>Designation</Td>
                   <Td fontWeight="semibold" fontSize="lg">
-                    {userData?.designation}
+                    {designation}
                   </Td>
                 </Tr>
               </Tbody>
             </Table>
           </TableContainer>
-          <Button colorScheme="blue" onClick={openModal}>
-            Update
-          </Button>
+          <HStack spacing={4}>
+            <Button colorScheme="blue" onClick={openModal}>
+              Update Profile
+            </Button>
+            <Button colorScheme="yellow" onClick={openPasswordModal}>
+              Change Password
+            </Button>
+          </HStack>
         </HStack>
         <UpdateProfileModal
           isOpen={isModalOpen}
@@ -203,6 +162,10 @@ export default function Profile() {
           userData={updateUserData}
           isProfileUpdated={isProfileUpdated}
           setIsProfileUpdated={setIsProfileUpdated}
+        />
+        <UpdatePasswordModal
+          isOpen={isPasswordModalOpen}
+          onClose={closePasswordModal}
         />
       </>
     );

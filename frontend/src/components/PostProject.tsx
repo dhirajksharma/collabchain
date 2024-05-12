@@ -1,97 +1,126 @@
 "use client";
 
-import { useState } from "react";
 import {
-  Progress,
-  Box,
-  ButtonGroup,
   Button,
   Heading,
-  Flex,
   FormControl,
-  GridItem,
   FormLabel,
   Input,
-  Select,
-  SimpleGrid,
-  InputLeftAddon,
-  InputGroup,
-  Textarea,
-  FormHelperText,
-  InputRightElement,
   HStack,
-  Card,
-  InputLeftElement,
-  Tag,
-  TagCloseButton,
   VStack,
-  Wrap,
-  WrapItem,
-  TagLabel,
+  Textarea,
+  useToast,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 
-import { useToast } from "@chakra-ui/react";
 import axios from "axios";
-import { useMutation } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router";
+import Loader from "./Loader";
+
+interface ProjectFormData {
+  // tagValue: string;
+  // projectTags: string[];
+  domain: string;
+  title: string;
+  candidates: number;
+  startDate: string;
+  endDate: string;
+  description: string;
+}
 
 const PostProject = () => {
-  const [show, setShow] = useState(false);
-  const [tagValue, setTagValue] = useState<string>("");
-  const [projectTags, setProjectTags] = useState<string[]>([]);
-  const [title, setTitle] = useState("");
-  const [candidates, setCandidates] = useState(0);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [description, setDescription] = useState("");
+  // const [tagValue, setTagValue] = useState<string>("");
+  // const [projectTags, setProjectTags] = useState<string[]>([]);
 
-  const handleAddTag = () => {
-    // console.log(tagValue);
-    setTagValue("");
-    if (/\S/.test(tagValue)) setProjectTags([...projectTags, tagValue]);
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    reset,
+  } = useForm<ProjectFormData>();
+
+  const startDate = watch("startDate");
+
+  const validateEndDate = (endDate: string) => {
+    if (endDate <= startDate) {
+      console.log(startDate, endDate);
+      return "End Date must be greater than Start Date";
+    }
+    return true;
   };
 
-  const handleRemoveTag = (tag: string) => {
-    const updatedTags = projectTags.filter((projectTag) => projectTag !== tag);
-    setProjectTags(updatedTags);
+  const fetchUserDetails = async () => {
+    const response = await axios.get("http://localhost:4000/api/user/profile");
+    return response.data;
   };
 
-  async function postProjectData() {
-    const organization_id = JSON.parse(
-      localStorage.getItem("userData")
-    ).organization_id;
+  const { data: userData } = useQuery("userData", fetchUserDetails);
 
-    await axios.post("http://localhost:4000/api/projects", {
-      title,
-      domain: "Demo Project",
-      description,
-      startDate,
-      endDate,
-      organization: {
-        id: organization_id,
-      },
-    });
-  }
+  // const handleAddTag = () => {
+  //   setTagValue("");
+  //   if (/\S/.test(tagValue)) setProjectTags([...projectTags, tagValue]);
+  // };
 
-  const { mutate, isLoading, isError, isSuccess, error } = useMutation(
-    postProjectData,
+  // const handleRemoveTag = (tag: string) => {
+  //   const updatedTags = projectTags.filter((projectTag) => projectTag !== tag);
+  //   setProjectTags(updatedTags);
+  // };
+
+  const { mutate, isLoading } = useMutation(
+    (formData: any) =>
+      axios.post("http://localhost:4000/api/projects", formData),
     {
-      onSuccess: () => {
-        // Invalidate relevant queries after successful mutation
-        console.log("Success");
+      onSuccess: (data) => {
+        console.log(data);
+        toast({
+          title: "Success",
+          description: "Project has been posted successfully!",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+        queryClient.invalidateQueries("projects,userData");
+        navigate("/app/projects");
       },
-      onError: (data) => {
-        console.log(`Error: ${data}`);
+      // TODO: Add backend error message
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `An error occurred. Could not Post Project`,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
       },
     }
   );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    mutate();
-    // const formData = new FormData(e.target);
-    // const userData = Object.fromEntries(formData.entries());
-    // console.log(userData);
-  };
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  function onSubmit(data: any) {
+    const orgId = userData.data?.organization?.organization_details._id;
+    const { candidates, ...projectData } = data;
+
+    const submitData = {
+      ...projectData,
+      menteesRequired: candidates,
+      organization: {
+        id: orgId,
+      },
+    };
+
+    mutate(submitData);
+    reset();
+  }
 
   return (
     <HStack
@@ -117,68 +146,53 @@ const PostProject = () => {
       <VStack
         spacing={4}
         as="form"
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         borderWidth="1px"
         rounded={10}
         p={5}
         w="50%"
       >
-        <FormControl isRequired>
+        <FormControl id="name" isRequired>
           <FormLabel htmlFor="title" fontWeight={"normal"}>
             Title
           </FormLabel>
-          <Input
-            id="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          <Input id="title" {...register("title")} />
         </FormControl>
-        <FormControl isRequired>
+        <FormControl id="description" isRequired>
           <FormLabel htmlFor="description" fontWeight={"normal"}>
             Description
           </FormLabel>
-          <Input
-            id="Domain"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          <Textarea id="description" {...register("description")} />
         </FormControl>
         <HStack justifyContent="space-between" spacing={10} w="full">
-          <FormControl isRequired>
-            <FormLabel htmlFor="start-date" fontWeight={"normal"}>
+          <FormControl id="startDate" isRequired>
+            <FormLabel htmlFor="startDate" fontWeight={"normal"}>
               Application Start Date
             </FormLabel>
-            <Input
-              id="start-date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
+            <Input id="startDate" type="date" {...register("startDate")} />
           </FormControl>
-          <FormControl isRequired>
-            <FormLabel htmlFor="end-date" fontWeight={"normal"}>
+          <FormControl id="endDate" isRequired>
+            <FormLabel htmlFor="endDate" fontWeight={"normal"}>
               Application End Date
             </FormLabel>
-            <Input
-              id="end-date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <Input id="endDate" type="date" {...register("endDate")} />
           </FormControl>
         </HStack>
-        <FormControl isRequired>
-          <FormLabel htmlFor="candidates" fontWeight={"normal"}>
-            Initial No. of Candidates
-          </FormLabel>
-          <Input
-            id="candidates"
-            type="number"
-            value={candidates}
-            onChange={(e) => setCandidates(e.target.value)}
-          />
-        </FormControl>
-        <FormControl>
+        <HStack spacing={4} w="100%">
+          <FormControl id="candidates" isRequired>
+            <FormLabel htmlFor="candidates" fontWeight={"normal"}>
+              Initial No. of Candidates
+            </FormLabel>
+            <Input id="candidates" type="number" {...register("candidates")} />
+          </FormControl>
+          <FormControl id="domain" isRequired>
+            <FormLabel htmlFor="domain" fontWeight={"normal"}>
+              Domain
+            </FormLabel>
+            <Input id="domain" type="text" {...register("domain")} />
+          </FormControl>
+        </HStack>
+        {/* <FormControl>
           <FormLabel htmlFor="domain-tags" fontWeight={"normal"}>
             Add Domain Tags
           </FormLabel>
@@ -212,7 +226,7 @@ const PostProject = () => {
               </WrapItem>
             );
           })}
-        </Wrap>
+        </Wrap> */}
         <Button type="submit" colorScheme="teal">
           Submit
         </Button>

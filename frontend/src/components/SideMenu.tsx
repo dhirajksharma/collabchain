@@ -1,69 +1,9 @@
-// import {
-//   Heading,
-//   Link,
-//   MenuItem,
-//   MenuList,
-//   Stack,
-//   useDisclosure,
-//   Menu,
-//   Box,
-// } from "@chakra-ui/react";
-// import PostProject from "./PostProject";
-
-// export default function SideMenu() {
-//   const { isOpen, onOpen, onClose } = useDisclosure();
-
-//   return (
-//     // <Stack
-//     //   h="full"
-//     //   paddingX="4"
-//     //   paddingY="2"
-//     //   shadow="lg"
-//     //   borderRadius="lg"
-//     //   w="20%"
-//     // >
-//     //   <Heading as="h4" size="lg">
-//     //     Menu
-//     //   </Heading>
-//     //   <Stack spacing={4} marginTop="6">
-//     //     <Link>Dashboard</Link>
-//     //     <Link onClick={onOpen}>Post Project</Link>
-//     //     <PostProject isOpen={isOpen} onClose={onClose}></PostProject>
-//     //   </Stack>
-//     // </Stack>
-//     <Box>
-//       <Menu
-//         isOpen={true}
-//         h="full"
-//         paddingX="4"
-//         paddingY="2"
-//         shadow="lg"
-//         borderRadius="lg"
-//         w="20%"
-//       >
-//         <MenuList>
-//           <MenuItem>LOGO</MenuItem>
-//           <MenuItem>User Feed</MenuItem>
-//           <MenuItem>Profile</MenuItem>
-//           <MenuItem>Post Project</MenuItem>
-//           <MenuItem>Account Settings</MenuItem>
-//           <MenuItem>Log Out</MenuItem>
-//         </MenuList>
-//       </Menu>
-//     </Box>
-//   );
-// }
-
-////////////////////////////////////
-
-import React, { ReactNode, useState } from "react";
 import { PhoneIcon } from "@chakra-ui/icons";
 import {
   IconButton,
   Box,
   CloseButton,
   Flex,
-  Icon,
   useColorModeValue,
   Text,
   Drawer,
@@ -72,46 +12,16 @@ import {
   BoxProps,
   FlexProps,
 } from "@chakra-ui/react";
-// import {
-//   FiHome,
-//   FiTrendingUp,
-//   FiCompass,
-//   FiStar,
-//   FiSettings,
-//   FiMenu,
-// } from "react-icons/fi";
-// import { IconType } from "react-icons";
 import { ReactText } from "react";
 import axios from "axios";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useMutation, useQuery } from "react-query";
-
-const logoutUser = () => {
-  return axios
-    .get("http://localhost:4000/api/user/logout")
-    .then((response) => response.data)
-    .catch((error) => {
-      throw new Error("Error fetching data");
-    });
-};
-
-// interface LinkItemProps {
-//   name: string;
-// }
-// const LinkItems: Array<string> = [
-//   "User Feed",
-//   "Profile",
-//   "Post Project",
-//   "Account Settings",
-//   "Logout",
-// ];
+import { useMutation } from "react-query";
 
 interface SidebarProps extends BoxProps {
   onClose: () => void;
 }
 
 interface NavItemProps extends FlexProps {
-  // icon: IconType;
   children: ReactText;
 }
 
@@ -131,22 +41,10 @@ const NavItem = ({ children, ...rest }: NavItemProps) => {
         role="group"
         cursor="pointer"
         _hover={{
-          // bg: "cyan.400",
           bg: "gray.50",
-          // color: "white",
         }}
         {...rest}
       >
-        {/* {icon && (
-          <Icon
-            mr="4"
-            fontSize="16"
-            _groupHover={{
-              color: "white",
-            }}
-            as={icon}
-          />
-        )} */}
         {children}
       </Flex>
     </Box>
@@ -195,9 +93,6 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         </NavLink>
         <CloseButton display={{ base: "flex", md: "none" }} onClick={onClose} />
       </Flex>
-      {/* {LinkItems.map((link) => (
-        <NavItem key={link}>{link}</NavItem>
-      ))} */}
       <NavLink to="feed">
         <NavItem>Home</NavItem>
       </NavLink>
@@ -214,11 +109,8 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
       <NavItem
         color={"red.500"}
         _hover={{
-          // bg: "cyan.400",
           bg: "red.50",
-          // color: "white",
         }}
-        // onClick={handleLogoutClick}
         onClick={handleLogout}
       >
         Logout
@@ -247,7 +139,6 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
         variant="outline"
         onClick={onOpen}
         aria-label="open menu"
-        // icon={<FiMenu />}
         icon={<PhoneIcon />}
       />
 

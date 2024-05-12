@@ -9,20 +9,15 @@ import {
   Heading,
   Text,
   useColorModeValue,
-  // Select,
   Link as ChakraLink,
   Spinner,
   useToast,
 } from "@chakra-ui/react";
 import { useState } from "react";
-// import { useDispatch } from "react-redux";
 import { useNavigate, Link as ReactRouterLink } from "react-router-dom";
-// import { createUser } from "../features/users/userSlice";
 import axios from "axios";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation } from "react-query";
 import { useCookies } from "react-cookie";
-import { useUser } from "../context/UserContext";
-import MyToast from "../components/MyToast";
 
 axios.defaults.withCredentials = true;
 
@@ -32,7 +27,6 @@ export default function Login() {
 
   // const dispatch = useDispatch();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const toast = useToast();
   const [cookies, setCookie] = useCookies(["token"]);
 
@@ -64,29 +58,17 @@ export default function Login() {
 
   const { mutate, isLoading, isSuccess } = useMutation(postUserData, {
     onSuccess: (data) => {
-      const { name, email, organization, phone } = data.user;
       const { token } = data;
-      // localStorage.setItem("authToken", token);
       setCookie("token", token, { path: "/" });
-
-      const { organization_id, designation } = organization;
-      localStorage.setItem(
-        "userData",
-        JSON.stringify({ name, email, phone, organization_id, designation })
-      );
 
       navigate("/app/profile", { state: { isAuthenticated: true } });
     },
   });
 
-  const { login, userData } = useUser();
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
       mutate();
-      // login(email, password);
-      // console.log(userData);
     } catch (error) {
       console.error("mutate error");
     }
@@ -149,15 +131,7 @@ export default function Login() {
               </FormControl>
               <Stack marginTop="8" spacing={4}>
                 <Stack>
-                  <Button
-                    type="submit"
-                    // bg={"blue.400"}
-                    // color={"white"}
-                    // _hover={{
-                    //   bg: "blue.500",
-                    // }}
-                    colorScheme="blue"
-                  >
+                  <Button type="submit" colorScheme="blue">
                     Sign in
                   </Button>
                 </Stack>
@@ -167,7 +141,6 @@ export default function Login() {
                     as={ReactRouterLink}
                     to="/signup"
                     color={"blue.400"}
-                    // colorScheme="blue"
                     textDecoration={"underline"}
                   >
                     Register Here

@@ -1,6 +1,5 @@
 import { Flex } from "@chakra-ui/react";
 import Profile from "../components/Profile";
-import { AnimatePresence, motion } from "framer-motion";
 import SideMenu from "../components/SideMenu";
 import PostProject from "../components/PostProject";
 import { Route, Routes } from "react-router-dom";
