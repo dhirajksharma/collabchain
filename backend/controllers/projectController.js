@@ -6,6 +6,8 @@ const Organization=require("../models/organizationModel");
 const User=require("../models/userModel");
 const ApiResponse=require("../utils/ApiResponse");
 const fs=require("fs");
+const path=require('path');
+const archiver=require('archiver');
 
 const {
   createProject,
@@ -52,6 +54,7 @@ exports.createProject = catchAsyncErrors(async (req, res, next) => {
       title: req.body.title,
       domain: req.body.domain,
       token: req.body.token,
+      menteesRequired: req.body.menteesRequired,
       description: req.body.description,
       startDate: req.body.startDate,
       endDate: req.body.endDate
@@ -335,33 +338,43 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
+  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+  if(project.tasks[taskIndex].menteesAssigned.findIndex(currMentee => currMentee == req.user.id) == -1) {
+    return next(new ErrorHander("You are not authorized to access this page", 403));
+  }
+
   const menteeAddress = req.user.ethAddress;
-  
-  const key=req.body.key || "abced";
-  const file = req.files.file;
-  const filename = file.name;
-  const filepath = `./uploads/${projectId}/${taskId}/`
-  
-  const hash = crypto.createHash('sha256');
-  hash.update(file.data);
-  const fileHash = hash.digest('hex');
-  
+  const key = req.body.key || "abced";
+  const files = Array.isArray(req.files.files) ? req.files.files : [req.files.files];
+  const filepath = `./uploads/${projectId}/${taskId}/`;
+
   if (!fs.existsSync(filepath)) {
     fs.mkdirSync(filepath, { recursive: true });
   }
 
-  file.mv(filepath+filename, function(err){
-    if (err) {
-      return next(new ErrorHander("Upload failed", 401));
+  for (const file of files) {
+    const filename = file.name;
+    const hash = crypto.createHash('sha256');
+    hash.update(file.data);
+    const fileHash = hash.digest('hex');
+
+    try {
+      await new Promise((resolve, reject) => {
+        file.mv(filepath + filename, function(err) {
+          if (err) {
+            return reject(new ErrorHander("Upload failed", 401));
+          }
+          resolve();
+        });
+      });
+
+      await createDocument(taskId, taskId + '123', fileHash, key, menteeAddress);
+    } catch (error) {
+      return next(new ErrorHander("Server Error", 500));
     }
-  })
-  
-  try{
-    await createDocument(taskId, taskId+'123', fileHash, key, menteeAddress)
-    return res.status(201).json(new ApiResponse(201, null, "upload successful"));
-  }catch(error){
-    return next(new ErrorHander("Server Error", 500));
   }
+
+  return res.status(201).json(new ApiResponse(201, null, "upload successful"));
 });
 
 // Selected mentees get their assigned tasks
@@ -413,7 +426,22 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
   try{
     await completeTask(projectId, taskId, verificationKey, mentorAddress);
     await project.save();
-    return res.status(201).json(new ApiResponse(201, null, "Task verification complete"));
+
+    const directoryPath = path.join(__dirname, `../uploads/${projectId}/${taskId}`);
+    const files = await fs.promises.readdir(directoryPath);
+    
+    const zip = archiver('zip', { zlib: { level: 9 } }); // Sets the compression level.
+    zip.on('error', err => { throw err; });
+
+    res.attachment('files.zip');
+    zip.pipe(res);
+
+    files.forEach(file => {
+        const filePath = path.join(directoryPath, file);
+        zip.file(filePath, { name: file });
+    });
+
+    zip.finalize();
   }catch(error){
     return next(new ErrorHander("Server Error", 500));
   }
