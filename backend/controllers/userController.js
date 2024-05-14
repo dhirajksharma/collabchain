@@ -300,7 +300,10 @@ exports.uploadFile = catchAsyncErrors(async (req, res, next) => {
 
 exports.getFile = catchAsyncErrors(async (req, res, next) => {
     const filetype = req.params.filetype;
-    const userId = req.params.userid;
+    let userId = req.params.userid;
+    if(userId.lastIndexOf('.') != -1)
+        userId = userId.substring(0, userId.lastIndexOf('.'));
+    
     const user = await User.findById(userId);
 
     if (!user) {
