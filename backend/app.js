@@ -9,8 +9,10 @@ const { Server }=require("socket.io");
 const { initializeSocketIO }=require("./socket/index.js");
 dotenv.config();
 const path = require('path');
+const mongoSanitize = require('express-mongo-sanitize');
 
 const app=express();
+app.use(mongoSanitize());
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   pingTimeout: 60000,
