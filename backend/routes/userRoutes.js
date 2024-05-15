@@ -12,7 +12,8 @@ const {
     sendVerificationEmail,
     verifyEmail,
     uploadFile,
-    getFile
+    getFile,
+    getUser
   } = require("../controllers/userController");
 const router=express.Router();
 
@@ -39,5 +40,7 @@ router.route("/logout")
 router.route("/uploads/:filetype/:userid")
     .get(getFile) //retreive the file from the server
     .post(uploadFile) //user uploads file to the server
+router.route("/:userid")
+    .get(getUser)
 
 module.exports=router;
