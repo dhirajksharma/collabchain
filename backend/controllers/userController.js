@@ -147,7 +147,22 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     sendToken(user, 200, res);
 });
 
-// Get User Detail
+// Get User Details
+exports.getUser = catchAsyncErrors(async (req, res, next) => {
+    const userid = req.params.userid;
+    const user = await User.findById(userid, {verifyEmailStatus: 0, aadhar: 0, ethAddress: 0, password: 0, token: 0, projects_applied: 0, projects_ongoing: 0, projects_saved: 0});
+
+    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('organization.organization_details');
+
+    if(!user){
+        return next(new ErrorHander("User not found", 400));
+    } else {
+        res.status(200).json(new ApiResponse(200, user));
+    }
+});
+
+// Get Logged-In User Detail
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user.id);
 
