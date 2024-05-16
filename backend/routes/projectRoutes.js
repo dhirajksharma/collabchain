@@ -1,6 +1,6 @@
 const express = require("express");
 const { isAuthenticatedUser} = require("../middleware/auth");
-const { addTaskContributor, removeTaskContributor, getAllProjects, createProject, getProjectDetails, editProject, applyToProject, withdrawApplication, updateMenteeStatus, addTask, uploadTaskWork, getAssignedTasks, markTaskComplete, saveProject } = require("../controllers/projectController");
+const { addTaskContributor, removeTaskContributor, getAllProjects, createProject, getProjectDetails, editProject, applyToProject, withdrawApplication, approveMenteeStatus, rejectMenteeStatus, addTask, uploadTaskWork, getAssignedTasks, markTaskComplete, saveProject } = require("../controllers/projectController");
 const router = express.Router();
 router.use(isAuthenticatedUser);
 
@@ -18,7 +18,8 @@ router.route("/:projectid/apply")
     .delete(withdrawApplication) //users withdrawing their application
 
 router.route("/:projectid/updatementeestatus/:userid")
-    .post(updateMenteeStatus) //mentor updates mentee status of applicants
+    .post(approveMenteeStatus) //mentor updates mentee status of applicants to approved
+    .delete(rejectMenteeStatus) //mentor updates mentee status of applicants to removed
 
 router.route("/:projectid/tasks")
     .post(addTask) //mentor adds new task to the project

@@ -171,7 +171,7 @@ exports.withdrawApplication = catchAsyncErrors(async (req, res, next) => {
 });
 
 // Mentor updates mentee status
-exports.updateMenteeStatus = catchAsyncErrors(async (req, res, next) => {
+exports.approveMenteeStatus = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
   const userId = req.params.userid;
   const project = await Project.findById(projectId);
@@ -196,7 +196,37 @@ exports.updateMenteeStatus = catchAsyncErrors(async (req, res, next) => {
   project.menteesApproved.push({
     user: userId,
   })
-  project.menteesApplication = project.menteesApplication.filter(application => application.user != userId);
+  
+  let indx = project.menteesApplication.findIndex(application => application.user == userId);
+  project.menteesApplication[indx].status = "approved";
+  
+  await project.save();
+  await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
+
+  return res.status(201).json(new ApiResponse(201, project, "Status updated"));
+});
+
+exports.rejectMenteeStatus = catchAsyncErrors(async (req, res, next) => {
+  const projectId = req.params.projectid;
+  const userId = req.params.userid;
+  const project = await Project.findById(projectId);
+  const usr = await User.findById(userId);
+
+  if (!project) {
+    return next(new ErrorHander("Project not found", 400));
+  }
+
+  if (!usr) {
+    return next(new ErrorHander("Mentee not found", 400));
+  }
+
+  if(req.user.id != project.mentor){
+    return next(new ErrorHander("You are not authorized to access this page",403));
+  }
+
+  let indx = project.menteesApplication.findIndex(application => application.user == userId);
+  project.menteesApplication[indx].status = "rejected";
+  
   await project.save();
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
 
