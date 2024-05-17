@@ -94,12 +94,12 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
-    const message = `Your password reset token is :- \n\n ${resetPasswordUrl} \n\nIf you have not requested this email then, please ignore it.`;
+    const message = `Your password reset url is :- \n\n ${resetPasswordUrl} \n\nIf you have not requested this email then, please ignore it.`;
 
     try {
         await sendEmail({
             email: user.email,
-            subject: `Ecommerce Password Recovery`,
+            subject: `CollabChain Password Recovery`,
             message,
         });
 
@@ -236,60 +236,67 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
 
 // Send verification Email
 exports.sendVerificationEmail = catchAsyncErrors(async (req, res, next) => {
-    const { email } = req.body;
+    const user = await User.findById(req.user.id);
 
-    // Generate a unique verification token
-    const token = uuid.v4();
-    //verificationTokens.push({ email, token });
+    if (!user) {
+        return next(new ErrorHander("User not found", 404));
+    }
 
-    // Create the email content
-    const mailOptions = {
-        from: process.env.OUREMAILID,
-        to: email,
-        subject: 'Email Verification',
-        text: `Click the following link to verify your email: http://localhost:3000/user/verifymail?token=${token}`,
-    };
+    if(user.verifyEmailStatus) {
+        return next(new ErrorHander("Your email is already verified", 401));
+    }
 
-    // Send the email
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            return next(new ErrorHander('Email could not be sent.', 500));
-        } else {
-            res.status(200).json(new ApiResponse(200, payload, "Email sent successfully"));
-        }
-    });
+    const verificationToken = user.getEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    const verificationUrl = `${req.protocol}://${req.get("host")}/verifymail/${verificationToken}`;
+    const message = `Your email verification url is :- \n\n ${verificationUrl} \n\nIf you have not requested this email then, please ignore it.`;
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: `CollabChain Email Verification`,
+            message,
+        });
+
+        res.status(200).json(new ApiResponse(200, null, `Email sent to ${user.email} successfully`));
+    } catch (error) {
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+
+        await user.save({ validateBeforeSave: false });
+
+        return next(new ErrorHander(error.message, 500));
+    }
 });
 
 //Verify Email by User
 exports.verifyEmail = catchAsyncErrors(async (req, res, next) => {
-    const { token } = req.query;
+    // creating token hash
+    const verifyEmailToken = crypto
+        .createHash("sha256")
+        .update(req.params.token)
+        .digest("hex");
 
-    // Check if the token exists in the verificationTokens array
-    const verificationData = verificationTokens.find((item) => item.token === token);
+    const user = await User.findOne({
+        verifyEmailToken,
+        verifyEmailExpire: { $gt: Date.now() },
+    });
 
-    if (!verificationData) {
-        return res.status(404).json({ message: 'Token not found or expired.' });
+    if (!user) {
+        return next(new ErrorHander("Email verification token is invalid or has been expired",400));
     }
 
-    try {
-        // Find the user by their email address and update their status to 'verified'
-        const user = await User.findOneAndUpdate(
-            { email: verificationData.email },
-            { isVerified: true }
-        );
+    user.verifyEmailStatus = true;
+    user.verifyEmailToken = undefined;
+    user.verifyEmailExpire = undefined;
 
-        if (!user) {
-            return next(new ErrorHander("User Not Found", 400));
-        }
+    await user.save();
 
-        // Remove the used token from the array (for one-time use tokens)
-        verificationTokens.splice(verificationTokens.indexOf(verificationData), 1);
+    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('organization.organization_details')
 
-        // You can customize the response message according to your application's requirements
-        return res.status(200).json(new ApiResponse(200, null, "Verification Successful"));
-    } catch (error) {
-        return next(new ErrorHander("Server Error", 500));
-    }
+    sendToken(user, 200, res);
 });
 
 //User uploads his resume or pic
