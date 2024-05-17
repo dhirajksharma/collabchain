@@ -56,12 +56,9 @@ const PostProject = () => {
     return true;
   };
 
-  const fetchUserDetails = async () => {
-    const response = await axios.get("http://localhost:4000/api/user/profile");
-    return response.data;
-  };
-
-  const { data: userData } = useQuery("userData", fetchUserDetails);
+  const { data: userData } = useQuery("userData", async () => {
+    return await axios.get("http://localhost:4000/api/user/profile");
+  });
 
   // const handleAddTag = () => {
   //   setTagValue("");

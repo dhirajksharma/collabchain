@@ -1,14 +1,5 @@
 import { StarIcon } from "@chakra-ui/icons";
-import {
-  Box,
-  Flex,
-  Heading,
-  Text,
-  Badge,
-  useColorModeValue,
-  IconButton,
-  VStack,
-} from "@chakra-ui/react";
+import { Box, Flex, Text, Badge } from "@chakra-ui/react";
 import { useNavigate } from "react-router";
 
 export const ProjectCard = ({ project, isOwner = true }) => {
@@ -19,12 +10,6 @@ export const ProjectCard = ({ project, isOwner = true }) => {
     (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)
   );
   const navigate = useNavigate();
-
-  // Define gradient colors for the card background
-  const bgGradient = useColorModeValue(
-    "linear(to-b, teal.300, teal.200)",
-    "linear(to-b, teal.700, teal.600)"
-  );
 
   const handleClick = (): void => {
     navigate(`/app/project/${project._id}`, { state: { isOwner } });

@@ -11,15 +11,19 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  useToast,
 } from "@chakra-ui/react";
 import axios from "axios";
 import { useState } from "react";
-import { useMutation } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+
+const fileTypes = ["image/jpeg", "image/jpg", "image/png"];
 
 export const ProfilePhoto = ({ userName, userId }) => {
-  console.log(userId);
   const [isHovered, setIsHovered] = useState(false);
-  const [image, setImage] = useState<string | null>(null);
+  const [image, setImage] = useState<File | null>(null);
+  const toast = useToast();
+  const queryClient = useQueryClient();
 
   const handleHover = () => {
     setIsHovered(true);
@@ -29,56 +33,67 @@ export const ProfilePhoto = ({ userName, userId }) => {
     setIsHovered(false);
   };
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const imageDataUrl = reader.result as string;
-        setImage(imageDataUrl);
-        // Here you can send the imageDataUrl to your backend for updating the profile photo
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleClick = () => {
-    console.log("Profile clicked");
-  };
-
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpenModal = () => {
-    console.log("Profile clicked");
     setIsOpen(true);
   };
 
   const handleCloseModal = () => {
+    setImage(null);
     setIsOpen(false);
   };
 
+  const uploadMutation = useMutation(
+    (file: File) => {
+      console.log(file);
+      const formData = new FormData();
+      // formData.append("type", "avatar");
+      formData.append("file", file); // Add any additional fields here
+      return axios.post(
+        `http://localhost:4000/api/user/uploads/avatar/${userId}`,
+        formData
+      );
+    },
+    {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Profile picture updated",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+        queryClient.invalidateQueries("avatar");
+      },
+    }
+  );
+
   const handleUploadPicture = () => {
-    // Implement picture upload logic here
-    console.log("Picture uploaded");
-    // Close the modal after picture is uploaded
+    // console.log(image);
+    if (image) {
+      uploadMutation.mutate(image);
+    }
     handleCloseModal();
   };
-
-  const uploadMutation = useMutation((file: File) => {
-    const formData = new FormData();
-    formData.append("type", "avatar");
-    formData.append("file", file); // Add any additional fields here
-    return axios.post(
-      `http://localhost:4000/api/user/uploads/${userId}`,
-      formData
-    );
-  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      console.log(file);
-      uploadMutation.mutate(file);
+      if (!fileTypes.includes(file.type)) {
+        toast({
+          title: "Error",
+          description: "Please upload jpeg or png files for display picture",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+        handleCloseModal();
+      } else {
+        setImage(file);
+      }
     }
   };
 
@@ -88,7 +103,7 @@ export const ProfilePhoto = ({ userName, userId }) => {
         <Avatar
           size="xl"
           name={userName}
-          // src={image}
+          src={`http://localhost:4000/api/user/uploads/avatar/${userId}`}
           onMouseEnter={handleHover}
           onMouseLeave={handleMouseLeave}
           onClick={() => {}}
@@ -109,24 +124,24 @@ export const ProfilePhoto = ({ userName, userId }) => {
           opacity={isHovered ? 1 : 0}
           transition="opacity 0.3s"
         >
-          <input
+          {/* <input
             type="file"
             accept="image/*"
             onChange={handleImageChange}
             style={{ display: "none" }}
             id="avatar-upload"
-          />
-          <label htmlFor="avatar-upload">
-            <Box
-              as="span"
-              fontSize="xl"
-              color="white"
-              cursor="pointer"
-              _hover={{ textDecoration: "underline" }}
-            >
-              <EditIcon />
-            </Box>
-          </label>
+          /> */}
+          {/* <label htmlFor="avatar-upload"> */}
+          <Box
+            as="span"
+            fontSize="xl"
+            color="white"
+            cursor="pointer"
+            _hover={{ textDecoration: "underline" }}
+          >
+            <EditIcon />
+          </Box>
+          {/* </label> */}
         </Box>
       </Box>
       <Modal isOpen={isOpen} onClose={handleCloseModal}>
