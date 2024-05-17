@@ -22,14 +22,12 @@ import {
   AlertDescription,
   useToast,
 } from "@chakra-ui/react";
-import { useLocation, useParams } from "react-router";
+import { useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import axios from "axios";
-import { useForm, SubmitHandler } from "react-hook-form";
 import Loader from "./Loader";
 import UpdateProjectModal from "./UpdateProjectModal";
-import { MenteeApplication, Project } from "../interfaces/Project";
-import { User } from "../interfaces/User";
+import { MenteeApplication } from "../interfaces/Project";
 import ApplicantDetails from "./ApplicantDetails";
 
 export const ProjectDetails = () => {
@@ -40,15 +38,11 @@ export const ProjectDetails = () => {
 
   const { id } = useParams<{ id: string }>();
 
-  const fetchData = async () => {
-    const [data1, data2] = await Promise.all([
-      axios.get(`http://localhost:4000/api/projects/${id}`),
-      axios.get("http://localhost:4000/api/user/profile"),
-    ]);
-    setDataFetched(true); // Set dataFetched to true when data is set
-    // setProject(data1.data);
-    return { project: data1.data, userData: data2.data };
-  };
+  const { data: userData } = useQuery("userData", async () => {
+    return axios.get("http://localhost:4000/api/user/profile");
+  });
+
+  const userId = userData?.data?.data?._id;
 
   const {
     data: queryData,
@@ -56,7 +50,18 @@ export const ProjectDetails = () => {
     isError,
     isSuccess,
     refetch,
-  } = useQuery("project,userData", fetchData);
+  } = useQuery(
+    "userProjects",
+    async () => {
+      return axios.get(`http://localhost:4000/api/projects/${id}`);
+    },
+    {
+      enabled: !!userId,
+      onSuccess: () => {
+        setDataFetched(true);
+      },
+    }
+  );
 
   useEffect(() => {
     if (isProjectUpdated) refetch();
@@ -99,7 +104,7 @@ export const ProjectDetails = () => {
           duration: 3000,
           isClosable: true,
         });
-        queryClient.invalidateQueries("project,userData");
+        queryClient.invalidateQueries("userProjects");
       },
       // onError callback
       onError: (error) => {
@@ -164,12 +169,15 @@ export const ProjectDetails = () => {
   }
 
   if (isSuccess) {
-    const project = queryData.project.data;
-    const userData = queryData.userData.data;
-    const isOwner = project.mentor._id === userData._id;
+    const project = queryData?.data.data;
+    const isOwner = project.mentor._id === userId;
     const isApplied = project.menteesApplication?.some(
-      (mentee: MenteeApplication) => mentee?.user?._id === userData._id
+      (mentee: MenteeApplication) => mentee?.user?._id === userId
     );
+
+    const applicationStatus = project.menteesApplication.find(
+      (application: MenteeApplication) => application?.user?._id === userId
+    )?.status;
 
     return (
       <>
@@ -214,7 +222,7 @@ export const ProjectDetails = () => {
               </VStack>
             </Alert>
           )}
-          {!isOwner && isApplied && (
+          {!isOwner && isApplied && applicationStatus === "pending" && (
             <Alert status="info" w="50%" variant="top-accent">
               <AlertIcon />
               <VStack spacing={0} alignItems="start">
@@ -226,6 +234,28 @@ export const ProjectDetails = () => {
                 <Button size="sm" colorScheme="yellow" onClick={handleWithdraw}>
                   Withdraw
                 </Button>
+              </VStack>
+            </Alert>
+          )}
+          {!isOwner && isApplied && applicationStatus === "approved" && (
+            <Alert status="success" w="50%" variant="top-accent">
+              <AlertIcon />
+              <VStack spacing={0} alignItems="start">
+                <AlertTitle>Application Status</AlertTitle>
+                <AlertDescription>
+                  Congratulations! Your application has been accepted
+                </AlertDescription>
+              </VStack>
+            </Alert>
+          )}
+          {!isOwner && isApplied && applicationStatus === "rejected" && (
+            <Alert status="error" w="50%" variant="top-accent">
+              <AlertIcon />
+              <VStack spacing={0} alignItems="start">
+                <AlertTitle>Application Status</AlertTitle>
+                <AlertDescription>
+                  Your application has been rejected 🥹
+                </AlertDescription>
               </VStack>
             </Alert>
           )}
@@ -311,7 +341,7 @@ export const ProjectDetails = () => {
 
                 {isOwner && (
                   <TabPanel>
-                    <ApplicantDetails />
+                    <ApplicantDetails project={project} />
                   </TabPanel>
                 )}
               </TabPanels>
