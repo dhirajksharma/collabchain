@@ -115,7 +115,7 @@ userSchema.methods.getResetPasswordToken=function(){
 }
 
 //Generating email verification token
-userSchema.methods.getResetPasswordToken=function(){
+userSchema.methods.getEmailVerificationToken=function(){
     const verificationToken=crypto.randomBytes(5).toString("hex");
 
     this.verifyEmailToken=crypto.createHash("sha256").update(verificationToken).digest("hex");
