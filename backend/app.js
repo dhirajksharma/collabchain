@@ -17,7 +17,7 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   pingTimeout: 60000,
   cors: {
-    origin: `${process.env.FRONTEND}`,
+    origin: "http://localhost:3000",
     credentials: true,
   },
 });
@@ -52,4 +52,4 @@ app.use(errorMiddleware);
 
 initializeSocketIO(io);
 
-module.exports = app;
+module.exports = httpServer;
