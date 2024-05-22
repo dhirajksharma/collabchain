@@ -336,10 +336,10 @@ exports.getFile = catchAsyncErrors(async (req, res, next) => {
 
     try {
         const files = await fs.readdir(directoryPath);
-        const file = files.find(f => path.parse(f).name === userId);
+        let file = files.find(f => path.parse(f).name === userId);
         
         if (!file) {
-            return res.status(404).send('File not found');
+            file = files.find(f =>path.parse(f).name === "default");
         }
 
         const filePath = path.join(directoryPath, file);
