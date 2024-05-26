@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import Login from "./pages/Login";
+import LoginPage from "./pages/LoginPage";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
 import { QueryClient, QueryClientProvider } from "react-query";
@@ -15,6 +16,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="login" element={<Login />} />
+          <Route path="l" element={<LoginPage />} />
           <Route path="signup" element={<Signup />} />
           <Route element={<ProtectedRoutes />} path="/">
             <Route element={<Home />} path="app/*" index={true} />

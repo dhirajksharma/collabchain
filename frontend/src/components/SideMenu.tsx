@@ -11,7 +11,17 @@ import {
   useDisclosure,
   BoxProps,
   FlexProps,
+  Link,
+  Icon,
 } from "@chakra-ui/react";
+import {
+  FaHome,
+  FaProjectDiagram,
+  FaUser,
+  FaPlusCircle,
+  FaCogs,
+  FaSignOutAlt,
+} from "react-icons/fa";
 import { ReactText } from "react";
 import axios from "axios";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -40,8 +50,9 @@ const NavItem = ({ children, ...rest }: NavItemProps) => {
         borderRadius="lg"
         role="group"
         cursor="pointer"
+        color="white"
         _hover={{
-          bg: "gray.50",
+          bg: "teal.600",
         }}
         {...rest}
       >
@@ -71,7 +82,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
 
   return (
     <Box
-      bg={useColorModeValue("white", "gray.900")}
+      bg="teal.700"
       borderRight="1px"
       borderRightColor={useColorModeValue("gray.200", "gray.700")}
       w={{ base: "full", md: 60 }}
@@ -94,25 +105,37 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         <CloseButton display={{ base: "flex", md: "none" }} onClick={onClose} />
       </Flex>
       <NavLink to="feed">
-        <NavItem>Home</NavItem>
+        <NavItem>
+          <Icon as={FaHome} mr={2} />
+          Home
+        </NavItem>
       </NavLink>
       <NavLink to="projects">
-        <NavItem>My Projects</NavItem>
+        <NavItem>
+          <Icon as={FaProjectDiagram} mr={2} />
+          My Projects
+        </NavItem>
       </NavLink>
       <NavLink to="profile">
-        <NavItem>Profile</NavItem>
+        <NavItem>
+          <Icon as={FaUser} mr={2} />
+          Profile
+        </NavItem>
       </NavLink>
       <NavLink to="post-project">
-        <NavItem>Post Project</NavItem>
+        <NavItem>
+          <Icon as={FaPlusCircle} mr={2} />
+          Post Project
+        </NavItem>
       </NavLink>
-      <NavItem>Account Settings</NavItem>
       <NavItem
         color={"red.500"}
         _hover={{
-          bg: "red.50",
+          bg: "white",
         }}
         onClick={handleLogout}
       >
+        <Icon as={FaSignOutAlt} mr={2} />
         Logout
       </NavItem>
     </Box>

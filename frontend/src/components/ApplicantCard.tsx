@@ -24,30 +24,32 @@ import {
 } from "@chakra-ui/react";
 import axios, { AxiosError } from "axios";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { MenteeApplication } from "../interfaces/Project";
 
 interface ApplicantCardProps {
   application: MenteeApplication;
   index: number;
   projectId: string;
+  status: string;
 }
 
 const ApplicantCard = ({
   application,
   index,
   projectId,
+  status,
 }: ApplicantCardProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const queryClient = useQueryClient();
   const toast = useToast();
   // console.log(isOpen);
 
-  // console.log(application.user._id);
+  // console.log(application);
   const { data: queryData } = useQuery(
-    "menteeData",
+    ["menteeData", application.user._id],
     async () => {
-      return axios.get(
+      return await axios.get(
         `http://localhost:4000/api/user/${application.user._id}`
       );
     },
@@ -137,6 +139,12 @@ const ApplicantCard = ({
           <Button colorScheme="teal" size="sm" onClick={onOpen}>
             View Profile
           </Button>
+
+          {/* {status === "approved" && (
+            <NavLink to={`tasks`}>
+              <Text>Tasks</Text>
+            </NavLink>
+          )} */}
         </Flex>
       </Card>
       <Modal isOpen={isOpen} onClose={onClose}>
@@ -226,12 +234,16 @@ const ApplicantCard = ({
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="green" mr={3} onClick={handleAccept}>
-              Accept
-            </Button>
-            <Button colorScheme="red" onClick={handleReject}>
-              Reject
-            </Button>
+            {status === "pending" && (
+              <>
+                <Button colorScheme="green" mr={3} onClick={handleAccept}>
+                  Accept
+                </Button>
+                <Button colorScheme="red" onClick={handleReject}>
+                  Reject
+                </Button>
+              </>
+            )}
           </ModalFooter>
         </ModalContent>
       </Modal>

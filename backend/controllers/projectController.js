@@ -2,12 +2,12 @@ const ErrorHander = require("../utils/errorhander");
 const catchAsyncErrors = require("../middleware/catchAsyncError");
 const crypto = require("crypto");
 const Project = require('../models/projectModel');
-const Organization=require("../models/organizationModel");
-const User=require("../models/userModel");
-const ApiResponse=require("../utils/ApiResponse");
-const fs=require("fs");
-const path=require('path');
-const archiver=require('archiver');
+const Organization = require("../models/organizationModel");
+const User = require("../models/userModel");
+const ApiResponse = require("../utils/ApiResponse");
+const fs = require("fs");
+const path = require('path');
+const archiver = require('archiver');
 
 const {
   createProject,
@@ -21,9 +21,9 @@ const {
 // Get all projects on public feed
 exports.getAllProjects = catchAsyncErrors(async (req, res, next) => {
   const publicProjects = await Project.find({
-    $or:[
+    $or: [
       { endDate: { $lt: new Date() } },
-      { menteesRequired : { $gt: 0 } }
+      { menteesRequired: { $gt: 0 } }
     ]
   });
   res.status(201).json(new ApiResponse(201, publicProjects));
@@ -31,12 +31,8 @@ exports.getAllProjects = catchAsyncErrors(async (req, res, next) => {
 
 // Mentor creates a new project
 exports.createProject = catchAsyncErrors(async (req, res, next) => {
-  console.log(req.body);
-  console.log(req.cookies);
   const mentor = req.user.id;
   const mentorAddress = req.user.ethAddress;
-  console.log(mentor);
-  console.log(mentorAddress);
 
   let project;
 
@@ -64,7 +60,7 @@ exports.createProject = catchAsyncErrors(async (req, res, next) => {
       startDate: req.body.startDate,
       endDate: req.body.endDate
     });
-    
+
     await createProject(project._id.toString(), mentorAddress);
     // const grpMembers=new Array(project.mentor);
     // const groupChat = await Chat.create({
@@ -76,7 +72,7 @@ exports.createProject = catchAsyncErrors(async (req, res, next) => {
     // });
 
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
-    
+
     res.status(201).json(new ApiResponse(201, project, "Project made successfully"));
   } catch (error) {
     if (project && project._id) {
@@ -97,7 +93,7 @@ exports.getProjectDetails = catchAsyncErrors(async (req, res, next) => {
   }
 
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
-    
+
   return res.status(201).json(new ApiResponse(201, project, "Project found"));
 });
 
@@ -121,24 +117,24 @@ exports.editProject = catchAsyncErrors(async (req, res, next) => {
 });
 
 // User saves project to watchlist
-exports.saveProject = catchAsyncErrors(async (req, res, next) =>{
+exports.saveProject = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
   let usr = await User.findById(req.user.id);
-  
+
   let indx = usr.projects_saved.indexOf(projectId);
-  if(indx>-1)
+  if (indx > -1)
     usr.projects_saved.splice(indx, 1);
   else
     usr.projects_saved.push(projectId);
 
   await usr.save();
-  await usr.populate('projects_saved projects_ongoing projects_completed','title description');
+  await usr.populate('projects_saved projects_ongoing projects_completed', 'title description');
   await usr.populate('organization.organization_details')
 
-  if(indx>-1)
+  if (indx > -1)
     return res.status(201).json(new ApiResponse(201, usr, "Project removed successfully"));
   else
-  return res.status(201).json(new ApiResponse(201, usr, "Project saved successfully"));
+    return res.status(201).json(new ApiResponse(201, usr, "Project saved successfully"));
 })
 
 // Users applying to a project
@@ -150,12 +146,12 @@ exports.applyToProject = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
-  project.menteesApplication.push({user: req.user.id});
+  project.menteesApplication.push({ user: req.user.id });
   user.projects_applied.push(projectId);
   await project.save();
   await user.save();
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
-  
+
   return res.status(201).json(new ApiResponse(201, project, "Application successful"));
 });
 
@@ -171,7 +167,7 @@ exports.withdrawApplication = catchAsyncErrors(async (req, res, next) => {
   project.menteesApplication = project.menteesApplication.filter((application) => (application.user != req.user.id || (application.user == req.user.id && application.status != 'pending')));
   await project.save();
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
-  
+
   return res.status(201).json(new ApiResponse(201, project, "Application withdrawn"));
 });
 
@@ -190,21 +186,21 @@ exports.approveMenteeStatus = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Mentee not found", 400));
   }
 
-  if(req.user.id != project.mentor){
-    return next(new ErrorHander("You are not authorized to access this page",403));
+  if (req.user.id != project.mentor) {
+    return next(new ErrorHander("You are not authorized to access this page", 403));
   }
 
   usr.projects_ongoing.push(projectId);
   await usr.save();
-  
-  project.menteesRequired-=1;
+
+  project.menteesRequired -= 1;
   project.menteesApproved.push({
     user: userId,
   })
-  
+
   let indx = project.menteesApplication.findIndex(application => application.user == userId);
   project.menteesApplication[indx].status = "approved";
-  
+
   await project.save();
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
 
@@ -225,13 +221,13 @@ exports.rejectMenteeStatus = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Mentee not found", 400));
   }
 
-  if(req.user.id != project.mentor){
-    return next(new ErrorHander("You are not authorized to access this page",403));
+  if (req.user.id != project.mentor) {
+    return next(new ErrorHander("You are not authorized to access this page", 403));
   }
 
   let indx = project.menteesApplication.findIndex(application => application.user == userId);
   project.menteesApplication[indx].status = "rejected";
-  
+
   await project.save();
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
 
@@ -251,10 +247,10 @@ exports.addTask = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("You are not authorized to access this page", 403));
   }
 
-  if(req.body.token<=0 || req.body.token>project.token){
-    return next(new ErrorHander("Invalid Token Count",403));
+  if (req.body.token <= 0 || req.body.token > project.token) {
+    return next(new ErrorHander("Invalid Token Count", 403));
   }
-  
+
   let taskId = projectId + project.tasks.length;
   const mentorAddress = req.user.ethAddress;
   let task = {
@@ -269,7 +265,7 @@ exports.addTask = catchAsyncErrors(async (req, res, next) => {
   try {
     await createTask(projectId, taskId, mentorAddress);
     project.tasks.push(task);
-    project.token-=req.body.token;
+    project.token -= req.body.token;
 
     await project.save();
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
@@ -296,22 +292,22 @@ exports.addTaskContributor = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Mentee not found", 400));
   }
 
-  if(req.user.id!=project.mentor){
-    return next(new ErrorHander("You are not authorized to access this page",403));
+  if (req.user.id != project.mentor) {
+    return next(new ErrorHander("You are not authorized to access this page", 403));
   }
 
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
   project.tasks[taskIndex].menteesAssigned.push(userId);
-  
-  const menteeId=project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
-  
+
+  const menteeId = project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
+
   project.menteesApproved[menteeId].assignedTaskIds.push(taskId);
   if (project.tasks[taskIndex].taskStatus === 'pending')
     project.tasks[taskIndex].taskStatus = 'active';
 
   const mentorAddress = req.user.ethAddress;
 
-  try{
+  try {
     await assignUser(projectId, taskId, mentee.ethAddress, mentorAddress);
     await project.save();
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
@@ -337,22 +333,22 @@ exports.removeTaskContributor = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Mentee not found", 400));
   }
 
-  if(req.user.id!=project.mentor){
-    return next(new ErrorHander("You are not authorized to access this page",403));
+  if (req.user.id != project.mentor) {
+    return next(new ErrorHander("You are not authorized to access this page", 403));
   }
 
   const mentorAddress = req.user.ethAddress;
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
-  
+
   project.tasks[taskIndex].menteesAssigned = project.tasks[taskIndex].menteesAssigned.filter(mentee => { mentee.user !== userId })
-  
-  const menteeId=project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
+
+  const menteeId = project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
   project.menteesApproved[menteeId].assignedTaskIds = project.menteesApproved[menteeId].assignedTaskIds.filter(taskID => { taskID !== taskId })
 
   if (project.tasks[taskIndex].menteesAssigned.length === 0)
     project.tasks[taskIndex].taskStatus = 'pending';
 
-  try{
+  try {
     await removeUser(projectId, taskId, mentee.ethAddress, mentorAddress);
     await project.save();
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
@@ -374,7 +370,7 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
   }
 
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
-  if(project.tasks[taskIndex].menteesAssigned.findIndex(currMentee => currMentee == req.user.id) == -1) {
+  if (project.tasks[taskIndex].menteesAssigned.findIndex(currMentee => currMentee == req.user.id) == -1) {
     return next(new ErrorHander("You are not authorized to access this page", 403));
   }
 
@@ -383,7 +379,7 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
   const files = Array.isArray(req.files.files) ? req.files.files : [req.files.files];
   const filepath = `./uploads/${projectId}/${taskId}/`;
 
-  if(project.tasks[taskIndex].verificationKey != null){
+  if (project.tasks[taskIndex].verificationKey != null) {
     return next(new ErrorHander("You have already uploaded the documents", 401));
   }
 
@@ -399,7 +395,7 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
 
     try {
       await new Promise((resolve, reject) => {
-        file.mv(filepath + filename, function(err) {
+        file.mv(filepath + filename, function (err) {
           if (err) {
             return reject(new ErrorHander("Upload failed", 401));
           }
@@ -408,6 +404,11 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
       });
 
       await createDocument(taskId, taskId + '123', fileHash, key, menteeAddress);
+
+      if (project.tasks[taskIndex].verificationKey == null) {
+        project.tasks[taskIndex].verificationKey = key;
+        await project.save();
+      }
     } catch (error) {
       return next(new ErrorHander("Server Error", 500));
     }
@@ -451,20 +452,20 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
   const verificationKey = req.body.verificationKey;
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
 
-  if(project.tasks[taskIndex].verificationKey != verificationKey){
+  if (project.tasks[taskIndex].verificationKey != verificationKey) {
     return next(new ErrorHander("Verification key does not match", 401));
   }
-  
+
   const mentorAddress = req.user.ethAddress;
 
   try {
     await completeTask(projectId, taskId, verificationKey, mentorAddress);
-    project.tasks[taskIndex].taskStatus='complete';
-  
-    let eachToken = project.tasks[taskIndex].token/project.tasks[taskIndex].menteesAssigned.length;
+    project.tasks[taskIndex].taskStatus = 'complete';
+
+    let eachToken = project.tasks[taskIndex].token / project.tasks[taskIndex].menteesAssigned.length;
     project.tasks[taskIndex].menteesAssigned.forEach(async id => {
       let user = await User.findById(id);
-      user.token+=eachToken;
+      user.token += eachToken;
       await user.save();
     })
 
@@ -472,7 +473,7 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
 
     const directoryPath = path.join(__dirname, `../uploads/${projectId}/${taskId}`);
     const files = await fs.promises.readdir(directoryPath);
-    
+
     const zip = archiver('zip', { zlib: { level: 9 } }); // Sets the compression level.
     zip.on('error', err => { throw err; });
 
@@ -480,12 +481,12 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
     zip.pipe(res);
 
     files.forEach(file => {
-        const filePath = path.join(directoryPath, file);
-        zip.file(filePath, { name: file });
+      const filePath = path.join(directoryPath, file);
+      zip.file(filePath, { name: file });
     });
 
     zip.finalize();
-  }catch(error){
+  } catch (error) {
     return next(new ErrorHander("Server Error", 500));
   }
 });

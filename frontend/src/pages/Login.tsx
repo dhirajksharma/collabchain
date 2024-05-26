@@ -46,7 +46,8 @@ export default function Login() {
       }
     } catch (error) {
       toast({
-        title: error.response.data.message,
+        title: "Error logging in",
+        description: error.response.data.message,
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -60,6 +61,14 @@ export default function Login() {
     onSuccess: (data) => {
       const { token } = data;
       setCookie("token", token, { path: "/" });
+      toast({
+        title: "Successful",
+        description: "Logged in successfully",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
 
       navigate("/app/profile", { state: { isAuthenticated: true } });
     },

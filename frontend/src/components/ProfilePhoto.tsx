@@ -45,12 +45,12 @@ export const ProfilePhoto = ({ userName, userId }) => {
   };
 
   const uploadMutation = useMutation(
-    (file: File) => {
+    async (file: File) => {
       console.log(file);
       const formData = new FormData();
       // formData.append("type", "avatar");
       formData.append("file", file); // Add any additional fields here
-      return axios.post(
+      return await axios.post(
         `http://localhost:4000/api/user/uploads/avatar/${userId}`,
         formData
       );

@@ -55,9 +55,9 @@ export default function Profile() {
   const userId = queryData?.data?._id;
 
   const { data: resumeData, isError: isErrorResume } = useQuery(
-    "resume",
+    ["resume", userId],
     async () => {
-      return axios.get(
+      return await axios.get(
         `http://localhost:4000/api/user/uploads/resume/${userId}`
       );
     },
@@ -67,11 +67,11 @@ export default function Profile() {
     }
   );
 
-  const { mutate: mutateResume } = useMutation(
-    (file: File) => {
+  const { mutateAsync: mutateResume } = useMutation(
+    async (file: File) => {
       const formData = new FormData();
       formData.append("file", file); // Add any additional fields here
-      return axios.post(
+      return await axios.post(
         `http://localhost:4000/api/user/uploads/resume/${userId}`,
         formData
       );
@@ -157,8 +157,6 @@ export default function Profile() {
 
   if (isSuccess) {
     const { name, email, organization, phone } = queryData.data.data;
-    console.log(queryData.data);
-    console.log(organization);
     const { designation, organization_details } = organization;
     const updateUserData = {
       name,
@@ -214,6 +212,7 @@ export default function Profile() {
             border="1px"
             borderColor="gray.100"
             borderRadius={10}
+            bg="white"
           >
             <Table variant="simple">
               <Tbody>

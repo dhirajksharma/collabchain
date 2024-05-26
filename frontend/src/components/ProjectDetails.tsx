@@ -29,6 +29,7 @@ import Loader from "./Loader";
 import UpdateProjectModal from "./UpdateProjectModal";
 import { MenteeApplication } from "../interfaces/Project";
 import ApplicantDetails from "./ApplicantDetails";
+import TaskDetails from "./TaskDetails";
 
 export const ProjectDetails = () => {
   const [dataFetched, setDataFetched] = useState(false);
@@ -39,7 +40,7 @@ export const ProjectDetails = () => {
   const { id } = useParams<{ id: string }>();
 
   const { data: userData } = useQuery("userData", async () => {
-    return axios.get("http://localhost:4000/api/user/profile");
+    return await axios.get("http://localhost:4000/api/user/profile");
   });
 
   const userId = userData?.data?.data?._id;
@@ -51,9 +52,9 @@ export const ProjectDetails = () => {
     isSuccess,
     refetch,
   } = useQuery(
-    "userProjects",
+    ["project", id],
     async () => {
-      return axios.get(`http://localhost:4000/api/projects/${id}`);
+      return await axios.get(`http://localhost:4000/api/projects/${id}`);
     },
     {
       enabled: !!userId,
@@ -266,11 +267,16 @@ export const ProjectDetails = () => {
             p={5}
             w="50%"
             alignItems="start"
+            bg="white"
           >
             <Tabs w="full" colorScheme="teal">
               <TabList>
-                <Tab>Project Details</Tab>
-                {isOwner && <Tab>Applicant Details</Tab>}
+                <Tab pt={0}>Project Details</Tab>
+                {isOwner && <Tab pt={0}>Applicant Details</Tab>}
+                <Tab pt={0}>Task Details</Tab>
+                {/* {!isOwner && isApplied && applicationStatus === "approved" && (
+                  <Tab pt={0}>Task Details</Tab>
+                )} */}
               </TabList>
               <TabPanels>
                 <TabPanel py={0}>
@@ -344,6 +350,9 @@ export const ProjectDetails = () => {
                     <ApplicantDetails project={project} />
                   </TabPanel>
                 )}
+                <TabPanel>
+                  <TaskDetails project={project} isOwner={isOwner} />
+                </TabPanel>
               </TabPanels>
             </Tabs>
           </VStack>

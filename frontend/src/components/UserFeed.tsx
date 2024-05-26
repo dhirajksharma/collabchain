@@ -20,18 +20,21 @@ import Loader from "./Loader";
 import ErrorPage from "../pages/ErrorPage";
 import { Project } from "../interfaces/Project";
 
-const fetchData = async () => {
-  const [data1, data2] = await Promise.all([
-    axios.get("http://localhost:4000/api/projects"),
-    axios.get("http://localhost:4000/api/user/profile"),
-  ]);
-  return { projects: data1.data, userData: data2.data };
-};
-
 export const UserFeed = () => {
+  const { data: userData } = useQuery("userData", async () => {
+    return await axios.get("http://localhost:4000/api/user/profile");
+  });
+
+  const userId = userData?.data.data._id;
+
   const { data, isLoading, isSuccess, isError } = useQuery(
-    "projects,userData",
-    fetchData
+    "projects",
+    async () => {
+      return await axios.get("http://localhost:4000/api/projects");
+    },
+    {
+      enabled: !!userId,
+    }
   );
 
   if (isLoading) {
@@ -43,10 +46,9 @@ export const UserFeed = () => {
   }
 
   if (isSuccess) {
-    const userData = data?.userData?.data;
-    console.log(data?.projects?.data);
-    const projects = data?.projects?.data.filter(
-      (project: Project) => project.mentor === userData._id
+    console.log(data?.data.data);
+    const projects = data?.data.data.filter(
+      (project: Project) => project.mentor === userId
     );
 
     return (

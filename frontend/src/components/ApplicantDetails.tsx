@@ -12,6 +12,7 @@ import {
   Tab,
   TabPanel,
   Container,
+  Box,
 } from "@chakra-ui/react";
 import { Project } from "../interfaces/Project";
 import ApplicantCard from "./ApplicantCard";
@@ -21,8 +22,6 @@ interface ApplicantDetailsProps {
 }
 
 const ApplicantDetails = ({ project }: ApplicantDetailsProps) => {
-  console.log(project.menteesApplication);
-
   return (
     <>
       <TableContainer mb={5}>
@@ -56,7 +55,7 @@ const ApplicantDetails = ({ project }: ApplicantDetailsProps) => {
 
         <TabPanels>
           <TabPanel>
-            <Container overflowY="scroll" maxH="300px">
+            <Box overflowY="scroll" maxH="300px">
               {project.menteesApplication
                 ?.filter((application) => application.status === "pending")
                 .map((application, index) => {
@@ -66,13 +65,14 @@ const ApplicantDetails = ({ project }: ApplicantDetailsProps) => {
                       application={application}
                       index={index + 1}
                       projectId={project._id}
+                      status={application.status}
                     />
                   );
                 })}
-            </Container>
+            </Box>
           </TabPanel>
-          <TabPanel>
-            <Container overflowY="scroll" maxH="300px">
+          <TabPanel px={0}>
+            <Box overflowY="scroll" maxH="300px">
               {project.menteesApplication
                 ?.filter((application) => application.status === "approved")
                 .map((application, index) => {
@@ -82,10 +82,11 @@ const ApplicantDetails = ({ project }: ApplicantDetailsProps) => {
                       application={application}
                       index={index + 1}
                       projectId={project._id}
+                      status={application.status}
                     />
                   );
                 })}
-            </Container>
+            </Box>
           </TabPanel>
         </TabPanels>
       </Tabs>

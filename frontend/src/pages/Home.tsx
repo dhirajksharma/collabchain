@@ -6,6 +6,7 @@ import { Route, Routes } from "react-router-dom";
 import { UserFeed } from "../components/UserFeed";
 import { ProjectDetails } from "../components/ProjectDetails";
 import MainFeed from "./MainFeed";
+import Tasks from "./Tasks";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
         <Route element={<PostProject />} path="post-project" />
         <Route element={<UserFeed />} path="projects" />
         <Route element={<ProjectDetails />} path="project/:id" />
+        <Route element={<Tasks />} path="project/:id/tasks" />
       </Routes>
     </Flex>
   );
