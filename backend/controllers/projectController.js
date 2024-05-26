@@ -378,6 +378,10 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
   const files = Array.isArray(req.files.files) ? req.files.files : [req.files.files];
   const filepath = `./uploads/${projectId}/${taskId}/`;
 
+  if(project.tasks[taskIndex].verificationKey != null){
+    return next(new ErrorHander("You have already uploaded the documents", 401));
+  }
+
   if (!fs.existsSync(filepath)) {
     fs.mkdirSync(filepath, { recursive: true });
   }
@@ -438,23 +442,27 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
   if(req.user.id!=project.mentor){
     return next(new ErrorHander("You are not authorized to access this page",403));
   }
-  
-  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
-  project.tasks[taskIndex].taskStatus='complete';
-  
 
-  let eachToken = project.tasks[taskIndex].token/project.tasks[taskIndex].menteesAssigned.length;
-  project.tasks[taskIndex].menteesAssigned.forEach(async id => {
-    let user = await User.findById(id);
-    user.token+=eachToken;
-    await user.save();
-  })
-  
   const verificationKey = req.body.verificationKey;
-  const mentorAddress = req.user.ethAddress;
+  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+
+  if(project.tasks[taskIndex].verificationKey != verificationKey){
+    return next(new ErrorHander("Verification key does not match", 401));
+  }
   
-  try{
+  const mentorAddress = req.user.ethAddress;
+
+  try {
     await completeTask(projectId, taskId, verificationKey, mentorAddress);
+    project.tasks[taskIndex].taskStatus='complete';
+  
+    let eachToken = project.tasks[taskIndex].token/project.tasks[taskIndex].menteesAssigned.length;
+    project.tasks[taskIndex].menteesAssigned.forEach(async id => {
+      let user = await User.findById(id);
+      user.token+=eachToken;
+      await user.save();
+    })
+
     await project.save();
 
     const directoryPath = path.join(__dirname, `../uploads/${projectId}/${taskId}`);

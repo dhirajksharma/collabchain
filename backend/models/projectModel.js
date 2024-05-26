@@ -117,33 +117,10 @@ const projectSchema= new mongoose.Schema({
                     ref:"User",
                 }
             ],
-            mentorProvidedDocuments:[
-                {
-                    public_id:{
-                        type:String,
-                        required:true,
-                    },
-                    url:{
-                        type:String,
-                        required:true,
-                    }
-                },
-            ],
-            menteeUploadedDocuments:[
-                {
-                    public_id:{
-                        type:String,
-                        required:true,
-                    },
-                    url:{
-                        type:String,
-                        required:true,
-                    },
-                    uploadDate:{
-                        type:Date
-                    }
-                },
-            ],
+            verificationKey:{
+                type: String,
+                default: null
+            }
         }
     ],
     parentProjectId:{
