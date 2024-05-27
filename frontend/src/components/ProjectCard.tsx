@@ -17,7 +17,7 @@ export const ProjectCard = ({ project, isOwner = true }) => {
 
   return (
     <Box
-      maxW="md"
+      width={"md"}
       borderWidth="1px"
       borderRadius="lg"
       overflow="hidden"
@@ -28,21 +28,21 @@ export const ProjectCard = ({ project, isOwner = true }) => {
       cursor="pointer"
       onClick={handleClick}
     >
-      <Flex justifyContent="space-between" alignItems="center" mb="2">
-        <Badge colorScheme="teal">{project.domain}</Badge>
-        <Text fontSize="sm">
-          {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()} (
-          {durationInDays} days)
+      <Flex justifyContent="space-between" alignItems="flex-start" mb="2" gap={4}>
+        <Badge colorScheme="teal" mt={0.5}>{project.domain}</Badge>
+        <Text fontSize="sm" fontWeight="semibold" textAlign={"end"}>
+          {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+          <br></br>
+          ({durationInDays} days)
         </Text>
       </Flex>
-      <Text fontWeight="bold" fontSize="lg" mb="2">
+      <Text fontWeight="bold" fontSize="xl" mb="2" textAlign={"left"}>
         {project.title}
       </Text>
-      <Text fontSize="sm" mb="4">
+      <Text fontSize="sm" mb="4" textAlign={"left"}>
         {project.description}
       </Text>
       <Flex alignItems="center">
-        <Text fontWeight="medium">Rating -</Text>
         <Text ml="1" fontWeight="medium">
           {project.ratings}&nbsp;
         </Text>

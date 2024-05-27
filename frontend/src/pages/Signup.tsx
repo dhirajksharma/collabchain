@@ -9,6 +9,7 @@ import {
   Heading,
   Text,
   HStack,
+  useColorModeValue,
   Link as ChakraLink,
   FormErrorMessage,
   useToast,
@@ -128,7 +129,13 @@ export default function Signup() {
         <Flex align={"center"} justifyContent={"center"}>
           <Heading fontSize={"4xl"}>Sign up for a new account</Heading>
         </Flex>
-        <Box rounded={"lg"} boxShadow={"lg"} p={8}>
+        <Box
+          rounded={"lg"}
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          bg={useColorModeValue("white", "gray.700")}
+          boxShadow={"lg"}
+          p={8}
+        >
           <form onSubmit={handleSubmit(onSubmit)}>
             <Stack spacing={4}>
               <HStack spacing={4}>
@@ -323,7 +330,7 @@ export default function Signup() {
                     }}
                     type="submit"
                   >
-                    Sign in
+                    Sign Up
                   </Button>
                 </Stack>
                 <Flex justifyContent="center">

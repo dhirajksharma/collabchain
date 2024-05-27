@@ -98,8 +98,9 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
             fontFamily="monospace"
             fontWeight="bold"
             cursor="pointer"
+            color={useColorModeValue("white", "gray.700")}
           >
-            Logo
+            CollabChain
           </Text>
         </NavLink>
         <CloseButton display={{ base: "flex", md: "none" }} onClick={onClose} />
@@ -119,13 +120,13 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
       <NavLink to="profile">
         <NavItem>
           <Icon as={FaUser} mr={2} />
-          Profile
+          My Profile
         </NavItem>
       </NavLink>
       <NavLink to="post-project">
         <NavItem>
           <Icon as={FaPlusCircle} mr={2} />
-          Post Project
+          New Project
         </NavItem>
       </NavLink>
       <NavItem

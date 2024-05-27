@@ -155,7 +155,7 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
           </ModalBody>
 
           <ModalFooter>
-            <Button mr={3} colorScheme="teal" type="submit">
+            <Button mr={3} colorScheme="blue" type="submit">
               Create
             </Button>
             <Button variant="ghost" onClick={onClose}>

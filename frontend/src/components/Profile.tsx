@@ -6,6 +6,7 @@ import {
   Button,
   HStack,
   Heading,
+  Flex,
   Input,
   Modal,
   ModalBody,
@@ -15,7 +16,9 @@ import {
   ModalHeader,
   ModalOverlay,
   VStack,
+  Link,
   useToast,
+  Text
 } from "@chakra-ui/react";
 import { Table, Tbody, Tr, Td, TableContainer } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
@@ -25,7 +28,7 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import Loader from "./Loader";
 import UpdateProfileModal from "./UpdateProfileModal";
 import UpdatePasswordModal from "./UpdatePasswordModal";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 
 axios.defaults.withCredentials = true;
 
@@ -52,7 +55,7 @@ export default function Profile() {
     return await axios.get("http://localhost:4000/api/user/profile");
   });
 
-  const userId = queryData?.data?._id;
+  const userId = queryData?.data?.data?._id;
 
   const { data: resumeData, isError: isErrorResume } = useQuery(
     ["resume", userId],
@@ -103,7 +106,9 @@ export default function Profile() {
 
   function handleUploadResume(): void {
     if (resume) {
-      mutateResume(resume);
+      let m = mutateResume(resume);
+      console.log(m);
+      console.log(queryData.data)
     }
     handleCloseResumeModal();
   }
@@ -156,7 +161,7 @@ export default function Profile() {
   }
 
   if (isSuccess) {
-    const { name, email, organization, phone } = queryData.data.data;
+    const { name, email, organization, phone, aadhar } = queryData.data.data;
     const { designation, organization_details } = organization;
     const updateUserData = {
       name,
@@ -184,11 +189,11 @@ export default function Profile() {
             mt={4}
             mb={4}
             fontWeight="bold"
-            textTransform="uppercase"
+            
           >
-            Profile Page
+            My Profile
           </Heading>
-          {isErrorResume && (
+          {/* {isErrorResume && (
             <Alert status="warning" w="50%" variant="top-accent">
               <AlertIcon />
               <VStack spacing={0} alignItems="start">
@@ -205,7 +210,7 @@ export default function Profile() {
                 </Button>
               </VStack>
             </Alert>
-          )}
+          )} */}
           <ProfilePhoto userName={name} userId={queryData.data.data._id} />
           <TableContainer
             w="80%"
@@ -229,9 +234,15 @@ export default function Profile() {
                   </Td>
                 </Tr>
                 <Tr>
-                  <Td>Contact</Td>
+                  <Td>Contact Number</Td>
                   <Td fontWeight="semibold" fontSize="lg">
                     {phone}
+                  </Td>
+                </Tr>
+                <Tr>
+                  <Td>Aadhar ID</Td>
+                  <Td fontWeight="semibold" fontSize="lg">
+                    {aadhar}
                   </Td>
                 </Tr>
                 <Tr>
@@ -258,20 +269,31 @@ export default function Profile() {
                     {designation}
                   </Td>
                 </Tr>
-                {resumeData?.data && (
                   <Tr>
                     <Td>Resume</Td>
                     <Td fontWeight="semibold" fontSize="lg">
-                      <Link
+                    <Flex gap={4}>
+                    {resumeData?
+                      (<Link
+                        as={RouterLink}
                         to={`http://localhost:4000/api/user/uploads/resume/${userId}`}
                         target="_blank"
+                        color="blue.500"
                         rel="noopener noreferrer"
                       >
-                        Link
-                      </Link>
+                        Open Resume
+                      </Link>)
+                      : null}
+                      <Text
+                      cursor={"pointer"}
+                      color="blue.500"
+                      onClick={handleOpenResumeModal}
+                      >
+                        Upload Resume
+                      </Text>
+                      </Flex>
                     </Td>
                   </Tr>
-                )}
               </Tbody>
             </Table>
           </TableContainer>
@@ -308,7 +330,7 @@ export default function Profile() {
               />
             </ModalBody>
             <ModalFooter>
-              <Button colorScheme="teal" mr={3} onClick={handleUploadResume}>
+              <Button colorScheme="blue" mr={3} onClick={handleUploadResume}>
                 Upload
               </Button>
               <Button variant="ghost" onClick={handleCloseResumeModal}>

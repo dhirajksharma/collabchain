@@ -68,7 +68,6 @@ export const UserFeed = () => {
           mt={4}
           mb={4}
           fontWeight="bold"
-          textTransform="uppercase"
         >
           My Projects
         </Heading>
@@ -101,7 +100,7 @@ export const UserFeed = () => {
                 {projects.length === 0 ? (
                   <NoContent />
                 ) : (
-                  <SimpleGrid columns={3} spacing={4}>
+                  <SimpleGrid columns={2} spacing={4}>
                     {projects.map((project: any) => (
                       <ProjectCard key={project._id} project={project} />
                     ))}

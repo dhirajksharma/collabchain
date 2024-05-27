@@ -52,8 +52,8 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
     <>
       <VStack alignItems="start">
         {isOwner && (
-          <Button colorScheme="teal" onClick={openCreateTaskModal}>
-            <Icon as={FaPlusCircle} mr={2} />
+          <Button colorScheme="blue" onClick={openCreateTaskModal}>
+            <Icon as={FaPlusCircle} mr={2} mt={1}/>
             Create Task
           </Button>
         )}

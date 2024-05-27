@@ -153,7 +153,7 @@ export const ProfilePhoto = ({ userName, userId }) => {
             <Input type="file" accept="image/*" onChange={handleFileChange} />
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleUploadPicture}>
+            <Button colorScheme="blue" mr={3} onClick={handleUploadPicture}>
               Upload
             </Button>
             <Button variant="ghost" onClick={handleCloseModal}>

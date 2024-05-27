@@ -217,7 +217,7 @@ const UpdateProfileModal = ({
                 </FormErrorMessage>
               </FormControl>
               <FormControl mt={4}>
-                <FormLabel>Organization Email</FormLabel>
+                <FormLabel>Designation</FormLabel>
                 <Input
                   type="text"
                   {...register("designation", {
@@ -232,7 +232,7 @@ const UpdateProfileModal = ({
           </ModalBody>
           <ModalFooter>
             <Button
-              colorScheme="green"
+              colorScheme="blue"
               mr={3}
               type="submit"
               // isLoading={isLoading}

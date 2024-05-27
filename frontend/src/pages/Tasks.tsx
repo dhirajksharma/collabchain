@@ -64,7 +64,6 @@ const Tasks = () => {
             mt={4}
             mb={4}
             fontWeight="bold"
-            textTransform="uppercase"
           >
             {project.title}
           </Heading>
@@ -87,7 +86,7 @@ const Tasks = () => {
           alignItems="start"
           bg="white"
         >
-          <Button colorScheme="teal">
+          <Button colorScheme="blue">
             <Icon as={FaPlusCircle} mr={2} />
             Create Task
           </Button>

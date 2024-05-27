@@ -1,4 +1,4 @@
-import { Container, Grid, Heading } from "@chakra-ui/react";
+import { Center, Container, Grid, Heading } from "@chakra-ui/react";
 import axios from "axios";
 import { useQuery } from "react-query";
 import Loader from "../components/Loader";
@@ -38,7 +38,7 @@ const MainFeed: React.FC = () => {
         <Heading as="h1" size="xl" mb={8}>
           All Projects
         </Heading>
-        <Grid templateColumns="repeat(3, 1fr)" gap={8}>
+        <Grid templateColumns="repeat(2, 1fr)" justifyItems={"center"}>
           {projects
             ?.filter((project: Project) => {
               return project.mentor !== userData._id;

@@ -191,22 +191,22 @@ export const ProjectDetails = () => {
           spacing={4}
           marginY="0.5"
         >
-          <HStack display="flex" alignItems="center" spacing={4} w="full">
+          <HStack display="flex" alignItems="center" justifyContent={"flex-start"} spacing={"16"} w="full">
             <Heading
               as="h1"
               size="xl"
               mt={4}
               mb={4}
               fontWeight="bold"
-              textTransform="uppercase"
             >
-              {project.title}
+              Project Details
             </Heading>
             <Box>
               <Badge
                 variant="solid"
                 colorScheme={project.menteesRequired > 0 ? "green" : "orange"}
                 fontSize="xl"
+                mt={1}
               >
                 {project.menteesRequired > 0 ? "Recruiting" : "In-Progress"}
               </Badge>
@@ -265,12 +265,11 @@ export const ProjectDetails = () => {
             borderWidth="1px"
             rounded={10}
             p={5}
-            w="50%"
             alignItems="start"
             bg="white"
           >
-            <Tabs w="full" colorScheme="teal">
-              <TabList>
+            <Tabs w="70vw" colorScheme="teal">
+              <TabList justifyContent={"space-evenly"}>
                 <Tab pt={0}>Project Details</Tab>
                 {isOwner && <Tab pt={0}>Applicant Details</Tab>}
                 <Tab pt={0}>Task Details</Tab>
@@ -334,7 +333,7 @@ export const ProjectDetails = () => {
                     </Table>
                     {isOwner && (
                       <Button colorScheme="blue" onClick={openModal}>
-                        Update Project
+                        Update Project Details
                       </Button>
                     )}
                     {!isOwner && !isApplied && (

@@ -136,7 +136,6 @@ const PostProject = () => {
         mt={4}
         mb={4}
         fontWeight="bold"
-        textTransform="uppercase"
       >
         Post Project
       </Heading>
@@ -225,7 +224,7 @@ const PostProject = () => {
             );
           })}
         </Wrap> */}
-        <Button type="submit" colorScheme="teal">
+        <Button type="submit" colorScheme="blue">
           Submit
         </Button>
       </VStack>

@@ -444,7 +444,7 @@ const ActiveTasks = ({ project, isOwner }) => {
                   <AlertDialogOverlay>
                     <AlertDialogContent>
                       <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                        Assign Task
+                        Remove Contributor
                       </AlertDialogHeader>
                       <AlertDialogBody>
                         Are you sure you want to remove{" "}
