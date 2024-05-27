@@ -11,6 +11,10 @@ import {
   Tabs,
   Icon,
   Button,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
 import axios from "axios";
 import { FaPlusCircle } from "react-icons/fa";
@@ -45,7 +49,6 @@ const Tasks = () => {
 
   if (isSuccess) {
     const project = queryData?.data.data;
-    console.log(project);
 
     return (
       <VStack
@@ -71,6 +74,7 @@ const Tasks = () => {
             <Badge
               variant="solid"
               colorScheme={project.menteesRequired > 0 ? "green" : "orange"}
+              textTransform={"none"}
               fontSize="xl"
             >
               {project.menteesRequired > 0 ? "Recruiting" : "In-Progress"}

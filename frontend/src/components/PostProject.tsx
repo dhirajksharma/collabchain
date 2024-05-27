@@ -24,6 +24,7 @@ interface ProjectFormData {
   // projectTags: string[];
   domain: string;
   title: string;
+  token: number;
   candidates: number;
   startDate: string;
   endDate: string;
@@ -104,7 +105,7 @@ const PostProject = () => {
   }
 
   function onSubmit(data: any) {
-    const orgId = userData.data?.organization?.organization_details._id;
+    const orgId = userData?.data?.data?.organization?.organization_details._id;
     const { candidates, ...projectData } = data;
 
     const submitData = {
@@ -146,22 +147,44 @@ const PostProject = () => {
         borderWidth="1px"
         rounded={10}
         p={5}
-        w="50%"
+        w="full"
         bg="white"
       >
-        <FormControl id="name" isRequired>
-          <FormLabel htmlFor="title" fontWeight={"normal"}>
-            Title
-          </FormLabel>
-          <Input id="title" {...register("title")} />
-        </FormControl>
+        <HStack spacing={4} w="100%">
+          <FormControl id="name" isRequired>
+            <FormLabel htmlFor="title" fontWeight={"normal"}>
+              Title
+            </FormLabel>
+            <Input id="title" {...register("title")} />
+          </FormControl>
+          <FormControl id="domain" isRequired>
+            <FormLabel htmlFor="domain" fontWeight={"normal"}>
+              Domain
+            </FormLabel>
+            <Input id="domain" type="text" {...register("domain")} />
+          </FormControl>
+        </HStack>
         <FormControl id="description" isRequired>
           <FormLabel htmlFor="description" fontWeight={"normal"}>
             Description
           </FormLabel>
           <Textarea id="description" {...register("description")} />
         </FormControl>
-        <HStack justifyContent="space-between" spacing={10} w="full">
+        <HStack spacing={4} w="100%">
+          <FormControl id="candidates" isRequired>
+            <FormLabel htmlFor="candidates" fontWeight={"normal"}>
+              Initial No. of Candidates
+            </FormLabel>
+            <Input id="candidates" type="number" {...register("candidates")} />
+          </FormControl>
+          <FormControl id="token" isRequired>
+            <FormLabel htmlFor="token" fontWeight={"normal"}>
+              No. of Tokens Allocated
+            </FormLabel>
+            <Input id="token" type="text" {...register("token")} />
+          </FormControl>
+        </HStack>
+        <HStack justifyContent="space-between" spacing={4} w="full">
           <FormControl id="startDate" isRequired>
             <FormLabel htmlFor="startDate" fontWeight={"normal"}>
               Application Start Date
@@ -175,55 +198,6 @@ const PostProject = () => {
             <Input id="endDate" type="date" {...register("endDate")} />
           </FormControl>
         </HStack>
-        <HStack spacing={4} w="100%">
-          <FormControl id="candidates" isRequired>
-            <FormLabel htmlFor="candidates" fontWeight={"normal"}>
-              Initial No. of Candidates
-            </FormLabel>
-            <Input id="candidates" type="number" {...register("candidates")} />
-          </FormControl>
-          <FormControl id="domain" isRequired>
-            <FormLabel htmlFor="domain" fontWeight={"normal"}>
-              Domain
-            </FormLabel>
-            <Input id="domain" type="text" {...register("domain")} />
-          </FormControl>
-        </HStack>
-        {/* <FormControl>
-          <FormLabel htmlFor="domain-tags" fontWeight={"normal"}>
-            Add Domain Tags
-          </FormLabel>
-          <InputGroup size="md">
-            <Input
-              id="domain-tags"
-              pr="4.5rem"
-              value={tagValue}
-              onChange={(e) => setTagValue(e.target.value)}
-            />
-            <InputRightElement w="4.5rem">
-              <Button
-                size="sm"
-                h="1.75rem"
-                colorScheme="blue"
-                onClick={handleAddTag}
-              >
-                Add +
-              </Button>
-            </InputRightElement>
-          </InputGroup>
-        </FormControl>
-        <Wrap borderWidth="1px" borderRadius={2} w="full" p={2} rounded={6}>
-          {projectTags.map((tag) => {
-            return (
-              <WrapItem id={tag}>
-                <Tag>
-                  <TagLabel>{tag}</TagLabel>
-                  <TagCloseButton onClick={() => handleRemoveTag(tag)} />
-                </Tag>
-              </WrapItem>
-            );
-          })}
-        </Wrap> */}
         <Button type="submit" colorScheme="blue">
           Submit
         </Button>

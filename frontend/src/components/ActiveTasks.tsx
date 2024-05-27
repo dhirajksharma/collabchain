@@ -250,6 +250,7 @@ const ActiveTasks = ({ project, isOwner }) => {
                     fontSize="medium"
                     cursor="pointer"
                     onClick={onOpenDoc}
+                    textTransform={"none"}
                   >
                     Documents Uploaded
                   </Badge>
@@ -345,6 +346,7 @@ const ActiveTasks = ({ project, isOwner }) => {
                       </Td>
                       <Td whiteSpace="normal">
                         <Badge
+                          
                           variant="subtle"
                           colorScheme={
                             (task.priority === "low" && "green") ||

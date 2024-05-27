@@ -52,7 +52,7 @@ const NavItem = ({ children, ...rest }: NavItemProps) => {
         cursor="pointer"
         color="white"
         _hover={{
-          bg: "teal.600",
+          bg: "blackAlpha.700",
         }}
         {...rest}
       >
@@ -82,7 +82,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
 
   return (
     <Box
-      bg="teal.700"
+      bg="teal.500"
       borderRight="1px"
       borderRightColor={useColorModeValue("gray.200", "gray.700")}
       w={{ base: "full", md: 60 }}
@@ -130,9 +130,10 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         </NavItem>
       </NavLink>
       <NavItem
-        color={"red.500"}
+        color={"black"}
         _hover={{
           bg: "white",
+          color: "red.500",
         }}
         onClick={handleLogout}
       >

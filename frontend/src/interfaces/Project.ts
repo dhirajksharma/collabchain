@@ -25,17 +25,13 @@ export interface MenteeApproved {
 export interface Task {
   id: string;
   title: string;
+  token?: number;
   description?: string;
   priority?: string;
   dueDate?: Date;
   taskStatus?: string;
   menteesAssigned?: { userId: Schema.Types.ObjectId; name?: string }[];
-  mentorProvidedDocuments?: { public_id: string; url: string }[];
-  menteeUploadedDocuments?: {
-    public_id: string;
-    url: string;
-    uploadDate?: Date;
-  }[];
+  verificationKey?: string;
 }
 
 export interface Project {
@@ -45,6 +41,7 @@ export interface Project {
   description?: string;
   startDate?: Date;
   endDate?: Date;
+  token?: number;
   ratings?: number;
   numOfReviews?: number;
   reviews?: ProjectReview[];

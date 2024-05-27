@@ -3,6 +3,7 @@ import { Project } from "./Project";
 export interface User {
   name: string;
   email: string;
+  token: number;
   verifyEmailStatus: boolean;
   phone?: number;
   aadhar: number;
@@ -12,7 +13,8 @@ export interface User {
     organization_id: string; // Assuming this is of type string (MongoDB ObjectId)
     designation?: string;
   };
-  project_ongoing?: Project; // Assuming this is of type string (MongoDB ObjectId)
+  project_applied?: Project[];
+  project_ongoing?: Project[]; // Assuming this is of type string (MongoDB ObjectId)
   projects_completed?: Project[]; // Array of strings (MongoDB ObjectId)
   projects_saved?: Project[]; // Array of strings (MongoDB ObjectId)
 }

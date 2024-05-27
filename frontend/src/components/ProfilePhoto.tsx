@@ -101,7 +101,7 @@ export const ProfilePhoto = ({ userName, userId }) => {
     <>
       <Box position="relative" display="inline-block" onClick={handleOpenModal}>
         <Avatar
-          size="xl"
+          size="2xl"
           name={userName}
           src={`http://localhost:4000/api/user/uploads/avatar/${userId}`}
           onMouseEnter={handleHover}

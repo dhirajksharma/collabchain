@@ -207,6 +207,7 @@ export const ProjectDetails = () => {
                 colorScheme={project.menteesRequired > 0 ? "green" : "orange"}
                 fontSize="xl"
                 mt={1}
+                textTransform={"none"}
               >
                 {project.menteesRequired > 0 ? "Recruiting" : "In-Progress"}
               </Badge>
@@ -302,6 +303,12 @@ export const ProjectDetails = () => {
                             Description
                           </Td>
                           <Td whiteSpace="normal">{project.description}</Td>
+                        </Tr>
+                        <Tr>
+                          <Td fontWeight="semibold" w="20%" pl={0}>
+                            Total Tokens
+                          </Td>
+                          <Td whiteSpace="normal">{project.token}</Td>
                         </Tr>
                         <Tr>
                           <Td fontWeight="semibold" w="20%" pl={0}>

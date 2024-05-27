@@ -8,6 +8,7 @@ import {
   Heading,
   Flex,
   Input,
+  Image,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -29,6 +30,7 @@ import Loader from "./Loader";
 import UpdateProfileModal from "./UpdateProfileModal";
 import UpdatePasswordModal from "./UpdatePasswordModal";
 import { Link as RouterLink } from "react-router-dom";
+import coinImage from '../assets/coin.png';
 
 axios.defaults.withCredentials = true;
 
@@ -161,7 +163,7 @@ export default function Profile() {
   }
 
   if (isSuccess) {
-    const { name, email, organization, phone, aadhar } = queryData.data.data;
+    const { name, email, organization, phone, aadhar, token } = queryData.data.data;
     const { designation, organization_details } = organization;
     const updateUserData = {
       name,
@@ -193,25 +195,13 @@ export default function Profile() {
           >
             My Profile
           </Heading>
-          {/* {isErrorResume && (
-            <Alert status="warning" w="50%" variant="top-accent">
-              <AlertIcon />
-              <VStack spacing={0} alignItems="start">
-                <AlertTitle>Upload Resume</AlertTitle>
-                <AlertDescription>
-                  You have not uploaded your resume
-                </AlertDescription>
-                <Button
-                  size="sm"
-                  colorScheme="green"
-                  onClick={handleOpenResumeModal}
-                >
-                  Upload
-                </Button>
-              </VStack>
-            </Alert>
-          )} */}
-          <ProfilePhoto userName={name} userId={queryData.data.data._id} />
+          <Flex justifyContent={"space-between"} alignItems={"end"} width={"75%"}>
+            <ProfilePhoto userName={name} userId={userId} />
+            <Flex alignItems="center" ml={4} direction={"column"}>
+              <Image src={coinImage} alt="Coin" boxSize="60px" mr={2} />
+              <Text fontWeight={"semibold"} fontSize={"xl"}>{token} tokens</Text>
+            </Flex>
+          </Flex>
           <TableContainer
             w="80%"
             border="1px"
