@@ -10,8 +10,7 @@ contract CollabChainTaskLog {
     //data structure to store task details
     struct Task {
         string projectId;
-        bool isComplete; //boolean to track task completion
-        string verificationKey; //verification key for mentor to mark the task complete
+        string status;
         address[] assignedUsers; //array of users allocated to the task
         string[] documentIDs; //array of document ids and their content hash to verify against tampered documents
     }
@@ -34,18 +33,13 @@ contract CollabChainTaskLog {
         _;
     }
 
-    modifier onlyOngoingTasks(string memory taskId) {
-        require(!tasks[taskId].isComplete, "Task is already complete");
-        _;
-    }
-
     //signals emitted by the blockchain upon a certain event
     event ProjectCreated(address mentr);
     event TaskCreated();
     event UserAssigned();
     event UserRemoved();
-    event DocumentCreated(string verificationKey);
-    event TaskCompleted();
+    event DocumentCreated();
+    event TaskUpdated();
 
     //generate verification key
     function generateKey() internal view returns (bytes32) {
@@ -79,8 +73,7 @@ contract CollabChainTaskLog {
     function createTask(string memory projectId, string memory taskId) public onlyMentor(projectId, msg.sender) {
         tasks[taskId] = Task({
             projectId: projectId,
-            isComplete: false,
-            verificationKey: "abc",
+            status: "pending",
             assignedUsers: new address[](0),
             documentIDs: new string[](0)
         });
@@ -88,14 +81,15 @@ contract CollabChainTaskLog {
     }
 
     //mentor assigns a user to contribute to the task
-    function assignUser(string memory projectId, string memory taskId, address user) public onlyMentor(projectId, msg.sender) onlyOngoingTasks(taskId) {
+    function assignUser(string memory projectId, string memory taskId, address user) public onlyMentor(projectId, msg.sender)  {
         tasks[taskId].assignedUsers.push(user);
+        tasks[taskId].status="active";
         emit UserAssigned();
     }
 
     //mentor removes a user from the task
     //will add checks to verify from the user before removing
-    function removeUser(string memory projectId, string memory taskId, address user) public onlyMentor(projectId, msg.sender) onlyOngoingTasks(taskId) {
+    function removeUser(string memory projectId, string memory taskId, address user) public onlyMentor(projectId, msg.sender)  {
         address[] storage users = tasks[taskId].assignedUsers;
         for (uint256 i = 0; i < users.length; i++) {
             if (users[i] == user) {
@@ -109,25 +103,16 @@ contract CollabChainTaskLog {
 
     //assigned users add documents to the project
     //when they upload the documents, they will be given the verification key
-    function createDocument(string memory taskId, string memory documentId, string memory content, string memory key) public onlyAssigned(taskId, msg.sender) onlyOngoingTasks(taskId) {
+    function createDocument(string memory taskId, string memory documentId, string memory content) public onlyAssigned(taskId, msg.sender)  {
         tasks[taskId].documentIDs.push(documentId);
-        tasks[taskId].verificationKey=key;
         documentHash[documentId]=content;
-        emit DocumentCreated(tasks[taskId].verificationKey);
+        emit DocumentCreated();
     }
 
     //mentor marks the task complete by entering the verification key given to them by the user
     //verifying this key against our original key to check authenticity
-    function completeTask(string memory projectId, string memory taskId, string memory key) public onlyMentor(projectId, msg.sender) onlyOngoingTasks(taskId) {
-        // require(keccak256(abi.encodePacked(key)) == keccak256(abi.encodePacked(tasks[taskId].verificationKey)), "Invalid verification key");
-        require( compareStrings(key, tasks[taskId].verificationKey) , "Invalid verification key");
-        tasks[taskId].isComplete = true;
-        emit TaskCompleted();
-    }
-
-    //central server uses this function to check task status
-    //before allowing mentor to access the documents
-    function checkTaskStatus(string memory taskId) public view returns (bool) {
-        return tasks[taskId].isComplete;
+    function updateTaskStatus(string memory projectId, string memory taskId, string memory status) public onlyMentor(projectId, msg.sender)  {
+        tasks[taskId].status = status;
+        emit TaskUpdated();
     }
 }

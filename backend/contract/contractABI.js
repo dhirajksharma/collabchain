@@ -1,14 +1,7 @@
 exports.contractABI= [
   {
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "verificationKey",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "DocumentCreated",
     "type": "event"
   },
@@ -28,13 +21,13 @@ exports.contractABI= [
   {
     "anonymous": false,
     "inputs": [],
-    "name": "TaskCompleted",
+    "name": "TaskCreated",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [],
-    "name": "TaskCreated",
+    "name": "TaskUpdated",
     "type": "event"
   },
   {
@@ -65,13 +58,8 @@ exports.contractABI= [
         "type": "string"
       },
       {
-        "internalType": "bool",
-        "name": "isComplete",
-        "type": "bool"
-      },
-      {
         "internalType": "string",
-        "name": "verificationKey",
+        "name": "status",
         "type": "string"
       }
     ],
@@ -195,11 +183,6 @@ exports.contractABI= [
         "internalType": "string",
         "name": "content",
         "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "key",
-        "type": "string"
       }
     ],
     "name": "createDocument",
@@ -221,32 +204,13 @@ exports.contractABI= [
       },
       {
         "internalType": "string",
-        "name": "key",
+        "name": "status",
         "type": "string"
       }
     ],
-    "name": "completeTask",
+    "name": "updateTaskStatus",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "taskId",
-        "type": "string"
-      }
-    ],
-    "name": "checkTaskStatus",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   }
 ]

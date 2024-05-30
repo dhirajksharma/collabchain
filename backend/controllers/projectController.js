@@ -15,7 +15,7 @@ const {
   assignUser,
   removeUser,
   createDocument,
-  completeTask
+  updateTaskStatus
 } = require("../contract/contractAPI");
 
 // Get all projects on public feed
@@ -263,16 +263,39 @@ exports.addTask = catchAsyncErrors(async (req, res, next) => {
   }
 
   try {
-    await createTask(projectId, taskId, mentorAddress);
     project.tasks.push(task);
     project.token -= req.body.token;
-
+    
     await project.save();
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
-
+    
+    const files = Array.isArray(req.files.files) ? req.files.files : [req.files.files];
+    const filepath = `./uploads/${projectId}/${taskId}/mentor/`;
+    
+    if (!fs.existsSync(filepath)) {
+      fs.mkdirSync(filepath, { recursive: true });
+    }
+    
+    for (const file of files) {
+      const filename = file.name;
+      try {
+        await new Promise((resolve, reject) => {
+          file.mv(filepath + filename, function (err) {
+            if (err) {
+              return reject(new ErrorHander("Upload failed", 401));
+            }
+            resolve();
+          });
+        });
+      } catch (error) {
+        return next(new ErrorHander(error.message, 500));
+      }
+    }
+    
+    await createTask(projectId, taskId, mentorAddress);
     return res.status(201).json(new ApiResponse(201, project, "Task added successfully"));
   } catch (error) {
-    return next(new ErrorHander("Server Error", 500));
+    return next(new ErrorHander(error.message, 500));
   }
 });
 
@@ -375,11 +398,12 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
   }
 
   const menteeAddress = req.user.ethAddress;
-  const key = req.body.key || "abced";
   const files = Array.isArray(req.files.files) ? req.files.files : [req.files.files];
-  const filepath = `./uploads/${projectId}/${taskId}/`;
+  const filepath = `./uploads/${projectId}/${taskId}/mentee/`;
 
-  if (project.tasks[taskIndex].verificationKey != null) {
+  if (project.tasks[taskIndex].taskStatus == "active") {
+    project.tasks[taskIndex].taskStatus = "submit";
+  } else {
     return next(new ErrorHander("You have already uploaded the documents", 401));
   }
 
@@ -403,12 +427,8 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
         });
       });
 
-      await createDocument(taskId, taskId + '123', fileHash, key, menteeAddress);
-
-      if (project.tasks[taskIndex].verificationKey == null) {
-        project.tasks[taskIndex].verificationKey = key;
-        await project.save();
-      }
+      await createDocument(taskId, taskId + '123', fileHash, menteeAddress);
+      await project.save();
     } catch (error) {
       return next(new ErrorHander("Server Error", 500));
     }
@@ -434,8 +454,7 @@ exports.getAssignedTasks = catchAsyncErrors(async (req, res, next) => {
   return res.status(201).json(new ApiResponse(201, menteeTasks, "Tasks retrieved"));
 });
 
-// Mentor marks the task complete
-exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
+exports.getTaskDocs = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
   const taskId = req.params.taskid;
 
@@ -445,33 +464,8 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
-  if (req.user.id != project.mentor) {
-    return next(new ErrorHander("You are not authorized to access this page", 403));
-  }
-
-  const verificationKey = req.body.verificationKey;
-  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
-
-  if (project.tasks[taskIndex].verificationKey != verificationKey) {
-    return next(new ErrorHander("Verification key does not match", 401));
-  }
-
-  const mentorAddress = req.user.ethAddress;
-
   try {
-    await completeTask(projectId, taskId, verificationKey, mentorAddress);
-    project.tasks[taskIndex].taskStatus = 'complete';
-
-    let eachToken = project.tasks[taskIndex].token / project.tasks[taskIndex].menteesAssigned.length;
-    project.tasks[taskIndex].menteesAssigned.forEach(async id => {
-      let user = await User.findById(id);
-      user.token += eachToken;
-      await user.save();
-    })
-
-    await project.save();
-
-    const directoryPath = path.join(__dirname, `../uploads/${projectId}/${taskId}`);
+    const directoryPath = path.join(__dirname, `../uploads/${projectId}/${taskId}/mentor`);
     const files = await fs.promises.readdir(directoryPath);
 
     const zip = archiver('zip', { zlib: { level: 9 } }); // Sets the compression level.
@@ -487,6 +481,89 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
 
     zip.finalize();
   } catch (error) {
-    return next(new ErrorHander("Server Error", 500));
+    return next(new ErrorHander(error.message, 500));
   }
+});
+
+exports.reviewTask = catchAsyncErrors(async (req, res, next) => {
+  const projectId = req.params.projectid;
+  const taskId = req.params.taskid;
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    return next(new ErrorHander("Project not found", 400));
+  }
+
+  if (req.user.id != project.mentor) {
+    return next(new ErrorHander("You are not authorized to access this page", 403));
+  }
+
+  const mentorAddress = req.user.ethAddress;
+  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+
+  try {
+    await updateTaskStatus(projectId, taskId, mentorAddress, "review");
+    project.tasks[taskIndex].taskStatus = 'review';
+    await project.save();
+
+    const directoryPath = path.join(__dirname, `../uploads/${projectId}/${taskId}/mentee`);
+    const files = await fs.promises.readdir(directoryPath);
+
+    const zip = archiver('zip', { zlib: { level: 9 } }); // Sets the compression level.
+    zip.on('error', err => { throw err; });
+
+    res.attachment('files.zip');
+    zip.pipe(res);
+
+    files.forEach(file => {
+      const filePath = path.join(directoryPath, file);
+      zip.file(filePath, { name: file });
+    });
+
+    zip.finalize();
+  } catch (error) {
+    return next(new ErrorHander(error.message, 500));
+  }
+});
+
+// Mentor marks the task complete
+exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
+  const projectId = req.params.projectid;
+  const taskId = req.params.taskid;
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    return next(new ErrorHander("Project not found", 400));
+  }
+
+  if (req.user.id != project.mentor) {
+    return next(new ErrorHander("You are not authorized to access this page", 403));
+  }
+
+  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+  const mentorAddress = req.user.ethAddress;
+
+  try {
+    if(req.body.status=="complete"){
+      project.tasks[taskIndex].taskStatus = 'complete';
+      
+      let eachToken = project.tasks[taskIndex].token / project.tasks[taskIndex].menteesAssigned.length;
+      project.tasks[taskIndex].menteesAssigned.forEach(async id => {
+        let user = await User.findById(id);
+        user.token += eachToken;
+        await user.save();
+      })
+    }else{
+      project.tasks[taskIndex].taskStatus = 'reject';
+    }
+    
+    await updateTaskStatus(projectId, taskId, mentorAddress, req.body.status);
+    await project.save();
+  } catch (error) {
+    return next(new ErrorHander(error.message, 500));
+  }
+
+  return res.status(201).json(new ApiResponse(201, project, "Task Marked Successfully"));
 });
