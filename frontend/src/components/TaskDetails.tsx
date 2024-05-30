@@ -40,7 +40,6 @@ interface TaskProps {
 }
 
 const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
-  console.log(isOwner);
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
 
   const openCreateTaskModal = () => {
@@ -55,13 +54,14 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
     <>
       <VStack alignItems="start">
         {isOwner && (
-            <>
+          <>
             <Alert status="info" variant="left-accent">
               <AlertIcon />
               <VStack spacing={0} alignItems="start">
                 <AlertTitle>Important Information</AlertTitle>
                 <AlertDescription>
-                  The first task you create for a new contributor should be signing of legal documents
+                  The first task you create for a new contributor should be
+                  signing of legal documents
                 </AlertDescription>
               </VStack>
             </Alert>
@@ -69,8 +69,8 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
               <Icon as={FaPlusCircle} mr={2} mt={1} />
               Create Task
             </Button>
-            </>
-          )}
+          </>
+        )}
         <Tabs variant="enclosed-colored" w="100%">
           <TabList w="100%" mb={2}>
             {isOwner && <Tab>Pending</Tab>}

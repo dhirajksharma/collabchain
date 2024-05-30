@@ -35,7 +35,7 @@ import { useMutation, useQueryClient } from "react-query";
 import axios from "axios";
 
 const PendingTasks = ({ project, isOwner }) => {
-  console.log(project.tasks);
+  // console.log(project.tasks);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef();
   const toast = useToast();

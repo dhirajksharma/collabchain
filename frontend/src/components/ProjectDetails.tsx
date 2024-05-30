@@ -191,14 +191,14 @@ export const ProjectDetails = () => {
           spacing={4}
           marginY="0.5"
         >
-          <HStack display="flex" alignItems="center" justifyContent={"flex-start"} spacing={"16"} w="full">
-            <Heading
-              as="h1"
-              size="xl"
-              mt={4}
-              mb={4}
-              fontWeight="bold"
-            >
+          <HStack
+            display="flex"
+            alignItems="center"
+            justifyContent={"flex-start"}
+            spacing={"16"}
+            w="full"
+          >
+            <Heading as="h1" size="xl" mt={4} mb={4} fontWeight="bold">
               Project Details
             </Heading>
             <Box>
@@ -273,10 +273,8 @@ export const ProjectDetails = () => {
               <TabList justifyContent={"space-evenly"}>
                 <Tab pt={0}>Project Details</Tab>
                 {isOwner && <Tab pt={0}>Applicant Details</Tab>}
-                <Tab pt={0}>Task Details</Tab>
-                {/* {!isOwner && isApplied && applicationStatus === "approved" && (
-                  <Tab pt={0}>Task Details</Tab>
-                )} */}
+                {(!isOwner && isApplied && applicationStatus === "approved") ||
+                  (isOwner && <Tab pt={0}>Task Details</Tab>)}
               </TabList>
               <TabPanels>
                 <TabPanel py={0}>

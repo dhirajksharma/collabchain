@@ -27,7 +27,6 @@ import {
   FormErrorMessage,
   FormLabel,
   Input,
-  Box,
 } from "@chakra-ui/react";
 import { Task } from "../interfaces/Project";
 import { useRef, useState } from "react";
@@ -346,7 +345,6 @@ const ActiveTasks = ({ project, isOwner }) => {
                       </Td>
                       <Td whiteSpace="normal">
                         <Badge
-                          
                           variant="subtle"
                           colorScheme={
                             (task.priority === "low" && "green") ||
@@ -373,70 +371,74 @@ const ActiveTasks = ({ project, isOwner }) => {
                 </Button>
               )}
               {!isOwner && (
-                <Button
-                  mr="auto"
-                  colorScheme="green"
-                  size="sm"
-                  onClick={onOpen}
-                  // rightIcon={<ChevronRightIcon />}
-                >
-                  Complete task
-                </Button>
+                <>
+                  <Button
+                    mr="auto"
+                    colorScheme="green"
+                    size="sm"
+                    onClick={onOpen}
+                    // rightIcon={<ChevronRightIcon />}
+                  >
+                    Complete task
+                  </Button>
+                  <Modal isOpen={isOpen} onClose={onClose}>
+                    <ModalOverlay />
+                    <form
+                      as="form"
+                      onSubmit={handleSubmit(onSubmit)}
+                      taskId={task.id}
+                    >
+                      <ModalContent>
+                        <ModalHeader>Modal Title</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                          <VStack spacing={4} align="stretch">
+                            <FormControl isInvalid={!!errors.key}>
+                              <FormLabel htmlFor="key">Key</FormLabel>
+                              <Input
+                                id="key"
+                                placeholder="Enter key"
+                                {...register("key", {
+                                  required: "Key is required",
+                                })}
+                              />
+                              <FormErrorMessage>
+                                {errors.key && errors.key.message}
+                              </FormErrorMessage>
+                            </FormControl>
+
+                            <FormControl isInvalid={!!errors.files}>
+                              <FormLabel htmlFor="files">
+                                Upload Files
+                              </FormLabel>
+                              <Input
+                                id="files"
+                                type="file"
+                                multiple
+                                {...register("files", {
+                                  required: "At least one file is required",
+                                })}
+                              />
+                              <FormErrorMessage>
+                                {errors.files && errors.files.message}
+                              </FormErrorMessage>
+                            </FormControl>
+                          </VStack>
+                        </ModalBody>
+
+                        <ModalFooter>
+                          <Button colorScheme="blue" mr={3} type="submit">
+                            Submit
+                          </Button>
+                          <Button variant="ghost" onClick={onClose}>
+                            Close
+                          </Button>
+                        </ModalFooter>
+                      </ModalContent>
+                    </form>
+                  </Modal>
+                </>
               )}
-              <Modal isOpen={isOpen} onClose={onClose}>
-                <ModalOverlay />
-                <form
-                  as="form"
-                  onSubmit={handleSubmit(onSubmit)}
-                  taskId={task.id}
-                >
-                  <ModalContent>
-                    <ModalHeader>Modal Title</ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                      <VStack spacing={4} align="stretch">
-                        <FormControl isInvalid={!!errors.key}>
-                          <FormLabel htmlFor="key">Key</FormLabel>
-                          <Input
-                            id="key"
-                            placeholder="Enter key"
-                            {...register("key", {
-                              required: "Key is required",
-                            })}
-                          />
-                          <FormErrorMessage>
-                            {errors.key && errors.key.message}
-                          </FormErrorMessage>
-                        </FormControl>
-
-                        <FormControl isInvalid={!!errors.files}>
-                          <FormLabel htmlFor="files">Upload Files</FormLabel>
-                          <Input
-                            id="files"
-                            type="file"
-                            multiple
-                            {...register("files", {
-                              required: "At least one file is required",
-                            })}
-                          />
-                          <FormErrorMessage>
-                            {errors.files && errors.files.message}
-                          </FormErrorMessage>
-                        </FormControl>
-                      </VStack>
-                    </ModalBody>
-
-                    <ModalFooter>
-                      <Button colorScheme="blue" mr={3} type="submit">
-                        Submit
-                      </Button>
-                      <Button variant="ghost" onClick={onClose}>
-                        Close
-                      </Button>
-                    </ModalFooter>
-                  </ModalContent>
-                </form>
-              </Modal>
               {isOwner && (
                 <AlertDialog
                   isOpen={isOpen}

@@ -13,6 +13,7 @@ import {
   FlexProps,
   Link,
   Icon,
+  Avatar,
 } from "@chakra-ui/react";
 import {
   FaHome,
@@ -25,7 +26,7 @@ import {
 import { ReactText } from "react";
 import axios from "axios";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useMutation } from "react-query";
+import { useMutation, useQuery } from "react-query";
 
 interface SidebarProps extends BoxProps {
   onClose: () => void;
@@ -63,6 +64,12 @@ const NavItem = ({ children, ...rest }: NavItemProps) => {
 };
 
 const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
+  const { data: queryData } = useQuery("userData", async () => {
+    return await axios.get("http://localhost:4000/api/user/profile");
+  });
+
+  const userId = queryData?.data?.data?._id;
+
   const navigate = useNavigate();
   const logoutMutation = useMutation(() =>
     axios.get("http://localhost:4000/api/user/logout")
@@ -105,6 +112,18 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         </NavLink>
         <CloseButton display={{ base: "flex", md: "none" }} onClick={onClose} />
       </Flex>
+      <NavLink to="profile">
+        <NavItem>
+          {/* <Icon as={FaUser} mr={2} />  */}
+          <Avatar
+            size="md"
+            name={queryData?.data?.data.name}
+            src={`http://localhost:4000/api/user/uploads/avatar/${userId}`}
+            mr={2}
+          />
+          {queryData?.data?.data.name}
+        </NavItem>
+      </NavLink>
       <NavLink to="feed">
         <NavItem>
           <Icon as={FaHome} mr={2} />
@@ -115,12 +134,6 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         <NavItem>
           <Icon as={FaProjectDiagram} mr={2} />
           My Projects
-        </NavItem>
-      </NavLink>
-      <NavLink to="profile">
-        <NavItem>
-          <Icon as={FaUser} mr={2} />
-          My Profile
         </NavItem>
       </NavLink>
       <NavLink to="post-project">
