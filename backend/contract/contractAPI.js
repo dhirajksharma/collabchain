@@ -44,8 +44,8 @@ exports.removeUser=async function removeUser(projectId, taskId, userAddress, sen
 }
 
 // 5. Create a document for a task
-exports.createDocument=async function createDocument(taskId, documentId, content, key, sender) {
-    const createDocumentTx = await collabChainTaskLogContract.methods.createDocument(taskId, documentId, content, key).send({
+exports.createDocument=async function createDocument(taskId, documentId, content, sender) {
+    const createDocumentTx = await collabChainTaskLogContract.methods.createDocument(taskId, documentId, content).send({
         from: sender, // Replace with the sender's address
         gas: '5000000', // Adjust the gas value as needed
     });
@@ -53,10 +53,10 @@ exports.createDocument=async function createDocument(taskId, documentId, content
 }
 
 // 6. Mark a task as complete
-exports.completeTask=async function completeTask(projectId, taskId, key, sender) {
-    const completeTaskTx = await collabChainTaskLogContract.methods.completeTask(projectId, taskId, key).send({
+exports.updateTaskStatus=async function updateTaskStatus(projectId, taskId, sender, status) {
+    const completeTaskTx = await collabChainTaskLogContract.methods.updateTaskStatus(projectId, taskId, status).send({
         from: sender, // Replace with the sender's address
         gas: '5000000', // Adjust the gas value as needed
     });
-    console.log('Task marked as complete on chain');
+    console.log('Task status updated on chain');
 }
