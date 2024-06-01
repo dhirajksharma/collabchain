@@ -1,6 +1,6 @@
 const express = require("express");
 const { isAuthenticatedUser} = require("../middleware/auth");
-const { addTaskContributor, removeTaskContributor, getAllProjects, createProject, getProjectDetails, editProject, applyToProject, withdrawApplication, approveMenteeStatus, rejectMenteeStatus, addTask, uploadTaskWork, getAssignedTasks, reviewTask, saveProject, markTaskComplete, getTaskDocs } = require("../controllers/projectController");
+const { addTaskContributor, removeTaskContributor, getAllProjects, createProject, getProjectDetails, editProject, applyToProject, withdrawApplication, approveMenteeStatus, rejectMenteeStatus, addTask, uploadTaskWork, getAssignedTasks, reviewTask, saveProject, markTaskComplete, getTaskDocs, modifyTask } = require("../controllers/projectController");
 const router = express.Router();
 router.use(isAuthenticatedUser);
 
@@ -23,6 +23,7 @@ router.route("/:projectid/updatementeestatus/:userid")
 
 router.route("/:projectid/tasks")
     .post(addTask) //mentor adds new task to the project
+    .put(modifyTask) //mentor modifies existing task
     
 router.route("/:projectid/tasks/:taskid/reviewtask")
     .post(reviewTask) //mentor marks the task complete with key

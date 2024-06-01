@@ -299,6 +299,48 @@ exports.addTask = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+// Mentor modifies task
+exports.modifyTask = catchAsyncErrors(async (req, res, next) => {
+  const projectId = req.params.projectid;
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    return next(new ErrorHander("Project not found", 400));
+  }
+
+  if(req.user.id!=project.mentor){
+    return next(new ErrorHander("You are not authorized to access this page",403));
+  }
+
+  if(req.body.token!=undefined && req.body.token<=0){
+    return next(new ErrorHander("Invalid Token Count",403));
+  }
+  
+  let taskId = req.body.taskId;
+  const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+  
+  if(req.body.token > project.tasks[taskIndex].token && (req.body.token - project.tasks[taskIndex].token)<=project.token)
+    project.tasks[taskIndex].token=req.body.token;
+  else if(req.body.token < project.tasks[taskIndex].token){
+    project.token += project.tasks[taskIndex].token - req.body.token;
+    project.tasks[taskIndex].token=req.body.token;
+  }
+  
+  if(req.body.description)
+    project.tasks[taskIndex].description=req.body.description;
+
+
+  if(req.body.priority)
+    project.tasks[taskIndex].priority=req.body.priority;
+
+  if(req.body.dueDate)
+    project.tasks[taskIndex].dueDate=req.body.dueDate;
+
+  await project.save();
+  return res.status(201).json(new ApiResponse(201, project, "Task updated successfully"));
+});
+
+
 // Mentor adds new contributor
 exports.addTaskContributor = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
@@ -556,7 +598,7 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
         await user.save();
       })
     }else{
-      project.tasks[taskIndex].taskStatus = 'reject';
+      project.tasks[taskIndex].taskStatus = 'active';
     }
     
     await updateTaskStatus(projectId, taskId, mentorAddress, req.body.status);
