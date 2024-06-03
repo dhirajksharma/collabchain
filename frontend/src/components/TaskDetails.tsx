@@ -57,7 +57,7 @@ import CreateTaskModal from "./CreateTaskModal";
 import PendingTasks from "./PendingTasks";
 import ActiveTasks from "./ActiveTasks";
 import TaskActionModal from "./TaskActionModal";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 import axios from "axios";
 import UpdateTaskModal from "./UpdateTaskModal";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -70,7 +70,15 @@ interface TaskProps {
 const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
   const toast = useToast();
   const queryClient = useQueryClient();
-  // console.log(project.tasks[0].menteesAssigned);
+  
+  const {
+    data: userData,
+    isLoading,
+    isSuccess,
+    refetch,
+  } = useQuery("userData", async () => {
+    return await axios.get("http://localhost:4000/api/user/profile");
+  });
 
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
 
@@ -81,8 +89,6 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
   const closeCreateTaskModal = () => {
     setIsCreateTaskModalOpen(false);
   };
-
-  //////
 
   const [sortedTasks, setSortedTasks] = useState<Task[]>(project.tasks);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -148,6 +154,40 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
     }
   );
 
+  const { mutateAsync: mutateRemoveTask } = useMutation(
+    async (data) => {
+      console.log("remove data:", data)
+      return await axios.delete(
+        `http://localhost:4000/api/projects/${project._id}/tasks/${data.taskId}/${data.menteeId}`
+      );
+    },
+    {
+      onSuccess: () => {
+        // console.log(data);
+        toast({
+          title: "Success",
+          description: "Mentee removed from task",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+        queryClient.invalidateQueries(["project", project._id]);
+        queryClient.invalidateQueries(["task", project._id]);
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `${error?.response?.data?.message}. Could not remove mentee from task`,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+      },
+    }
+  );
+
   const handleAssignClick = (mentee) => {
     const postData = {
       taskId: selectedTask?.id,
@@ -156,6 +196,17 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
     mutateAssignTask(postData);
     handleCloseModal();
   };
+
+  const handleRemoveClick = (mentee) => {
+    const postData = {
+      taskId: selectedTask?.id,
+      menteeId: mentee._id,
+    };
+    mutateRemoveTask(postData);
+    handleCloseModal();
+  };
+
+
 
   // Review task done by mentee
   const { mutateAsync: mutateReviewTask } = useMutation(
@@ -360,11 +411,39 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
         if (isOwner) {
           modalContent = (
             <>
-              <ModalHeader>Task is active</ModalHeader>
+              <ModalHeader>Remove Contributor</ModalHeader>
               <ModalCloseButton />
               <ModalBody pb={6}>
-                The Task is still not completed by the mentee. Please check back
-                later
+                Choose a mentee to remove from this task
+                <VStack
+                  divider={<StackDivider borderWidth="1px" />}
+                  spacing="1"
+                  alignItems="flex-start"
+                  mt={4}
+                  borderWidth="1px"
+                >
+                  {selectedTask.menteesAssigned?.map((mentee) => {
+                    return (
+                      <>
+                        <Flex
+                          flexDirection="column"
+                          alignItems="start"
+                          cursor="pointer"
+                          _hover={{ bg: "gray.100" }}
+                          w="100%"
+                          py={1}
+                          px={4}
+                          borderRadius={3}
+                          id={mentee.userId}
+                          onClick={() => handleRemoveClick(mentee)}
+                        >
+                          <Text fontWeight="medium">{mentee.name}</Text>
+                          <Text fontWeight="medium">{mentee.email}</Text>
+                        </Flex>
+                      </>
+                    );
+                  })}
+                </VStack>
               </ModalBody>
             </>
           );
@@ -374,7 +453,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
               <form
                 as="form"
                 onSubmit={handleMenteeSubmit(onSubmit)}
-                taskId={task.id}
+                taskId={selectedTask.id}
               >
                 <ModalHeader>Modal Title</ModalHeader>
                 <ModalCloseButton />
@@ -560,7 +639,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
               }}
             >
               {project.tasks?.map((task: Task, index: number) => {
-                return (
+                return ( (isOwner || task?.menteesAssigned[0]?._id == userData?.data.data._id) && 
                   <>
                     <Tr key={task.id}>
                       <Td w="5%">{index + 1}</Td>
@@ -608,6 +687,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                               <Avatar
                                 size="md"
                                 name={task?.menteesAssigned[0]?.name}
+                                src={`http://localhost:4000/api/user/uploads/avatar/${task?.menteesAssigned[0]?._id}`}
                                 cursor="pointer"
                               />
                             </PopoverTrigger>
@@ -615,7 +695,8 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                               <PopoverArrow />
                               <PopoverCloseButton />
                               <PopoverBody>
-                                <VStack align="start">
+                              {task.taskStatus != "pending"?
+                                (<VStack align="start">
                                   <HStack>
                                     <Text fontWeight="bold">Name:</Text>
                                     <Text>
@@ -637,7 +718,11 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                       View Profile
                                     </Text>
                                   </HStack>
-                                </VStack>
+                                </VStack>):
+                                (
+                                  <Text textAlign={"center"}>You have not assigned<br></br>this task to anyone yet</Text>
+                                )
+                              }
                               </PopoverBody>
                             </PopoverContent>
                           </Popover>
@@ -666,7 +751,6 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                 spacing="0"
                                 alignItems="flex-start"
                                 mt={0}
-                                borderWidth="1px"
                                 sx={{
                                   "& > button": {
                                     cursor: "pointer",
@@ -682,39 +766,51 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                     <Button
                                       isDisabled={
                                         task.taskStatus === "complete" ||
-                                        task.taskStatus === "submit"
+                                        task.taskStatus === "submit" ||
+                                        task.taskStatus === "review"
                                       }
-                                      colorScheme="blue"
+                                      colorScheme="white"
+                                      textColor="black"
                                       onClick={() => openUpdateTaskModal(task)}
+                                      _hover={{bg: "#efefef"}}
                                     >
                                       Update Task
                                     </Button>
                                     <Button
                                       onClick={() => handleOpenModal(task)}
+                                      colorScheme="white"
+                                      textColor="black"
                                       isDisabled={task.taskStatus !== "pending"}
+                                      _hover={{bg: "#efefef"}}
                                     >
                                       Assign Mentee
                                     </Button>
                                     <Button
                                       onClick={() => handleOpenModal(task)}
-                                      colorScheme="blue"
+                                      colorScheme="white"
+                                      textColor="black"
                                       isDisabled={task.taskStatus !== "submit"}
+                                      _hover={{bg: "#efefef"}}
                                     >
                                       Get documents
                                     </Button>
                                     <Button
                                       onClick={() => handleOpenModal(task)}
-                                      colorScheme="green"
+                                      colorScheme="white"
+                                      textColor="black"
                                       isDisabled={task.taskStatus !== "review"}
+                                      _hover={{bg: "#efefef"}}
                                     >
                                       Finalize task
                                     </Button>
                                     <Button
-                                      colorScheme="red"
+                                      colorScheme="white"
+                                      textColor="black"
                                       onClick={() => handleOpenModal(task)}
                                       isDisabled={
-                                        task.taskStatus === "complete"
+                                        task.taskStatus !== "active"
                                       }
+                                      _hover={{bg: "#efefef"}}
                                     >
                                       Remove contributor
                                     </Button>
@@ -722,9 +818,11 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                 )}
                                 {!isOwner && (
                                   <Button
-                                    colorScheme="blue"
+                                    colorScheme="white"
+                                    textColor="black"
                                     onClick={() => handleOpenModal(task)}
                                     isDisabled={task.taskStatus !== "active"}
+                                    _hover={{bg: "#efefef"}}
                                   >
                                     Submit Documents
                                   </Button>
