@@ -34,7 +34,12 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
 
         await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
         await user.populate('organization.organization_details')
-
+        
+        await sendEmail({
+            email: user.email,
+            subject: `Collabchain | Account Registration`,
+            message: `You have successfully registered on our platform Collabchain.`,
+          });
         sendToken(user, 201, res);
     } else {
         return next(new ErrorHander("User Already exists", 400));
@@ -65,6 +70,12 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
 
     await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
+    
+    await sendEmail({
+        email: user.email,
+        subject: `Collabchain | Account Login`,
+        message: `We have recieved a new login from your account.`,
+      });
 
     sendToken(user, 200, res);
 });
@@ -100,8 +111,8 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     try {
         await sendEmail({
             email: user.email,
-            subject: `CollabChain Password Recovery`,
-            message,
+            subject: `CollabChain | Password Reset`,
+            message: `Your password reset url is :- \n\n ${resetPasswordUrl} \n\nIf you have not requested this email then, please ignore it.`,
         });
 
         res.status(200).json(new ApiResponse(200, null, `Email sent to ${user.email} successfully`));
@@ -140,6 +151,11 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
+    await sendEmail({
+        email: user.email,
+        subject: `Collabchain | Password Reset`,
+        message: `You have successfully reset your account password.`,
+      });
     await user.save();
 
     await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
@@ -257,8 +273,8 @@ exports.sendVerificationEmail = catchAsyncErrors(async (req, res, next) => {
     try {
         await sendEmail({
             email: user.email,
-            subject: `CollabChain Email Verification`,
-            message,
+            subject: `CollabChain | Email Verification`,
+            message: `Your email verification url is :- \n\n ${verificationUrl} \n\nIf you have not requested this email then, please ignore it.`,
         });
 
         res.status(200).json(new ApiResponse(200, null, `Email sent to ${user.email} successfully`));
