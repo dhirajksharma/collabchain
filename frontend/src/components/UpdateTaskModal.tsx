@@ -31,7 +31,6 @@ interface TaskFormData {
 const UpdateTaskModal = ({ isOpen, onClose, taskData, projectId }) => {
   const queryClient = useQueryClient();
 
-  console.log(taskData);
   const {
     register,
     handleSubmit,
@@ -101,7 +100,7 @@ const UpdateTaskModal = ({ isOpen, onClose, taskData, projectId }) => {
               <Input
                 type="text"
                 {...register("description", {
-                  required: "Field is required",
+                  
                 })}
               />
               <FormErrorMessage>
@@ -136,7 +135,7 @@ const UpdateTaskModal = ({ isOpen, onClose, taskData, projectId }) => {
               <Input
                 type="date"
                 {...register("dueDate", {
-                  required: "Field is required",
+                  
                 })}
               />
               <FormErrorMessage>{errors.dueDate?.message}</FormErrorMessage>
@@ -146,7 +145,7 @@ const UpdateTaskModal = ({ isOpen, onClose, taskData, projectId }) => {
               <Input
                 type="number"
                 {...register("token", {
-                  required: "Field is required",
+                  
                 })}
               />
               <FormErrorMessage>{errors.token?.message}</FormErrorMessage>

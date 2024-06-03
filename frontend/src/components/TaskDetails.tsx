@@ -91,24 +91,49 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
   };
 
   const [sortedTasks, setSortedTasks] = useState<Task[]>(project.tasks);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortDateDirection, setsortDateDirection] = useState<"asc" | "desc">("asc");
+  const [sortPriorityDirection, setsortPriorityDirection] = useState<"asc" | "desc">("asc");
 
   const handleSortByDueDate = () => {
-    const sorted = [...sortedTasks].sort((a, b) => {
-      const dateA = new Date(a.dueDate).getTime();
-      const dateB = new Date(b.dueDate).getTime();
-      return sortDirection === "asc" ? dateA - dateB : dateB - dateA;
+    setsortDateDirection(sortDateDirection === "asc" ? "desc" : "asc");
+    setSortedTasks((old)=>{
+      return old.sort((a, b) => {
+        const dateA = new Date(a.dueDate).getTime();
+        const dateB = new Date(b.dueDate).getTime();
+        return sortDateDirection === "asc" ? dateA - dateB : dateB - dateA;
+      });
     });
-    setSortedTasks(sorted);
     queryClient.setQueryData<Project>(["project", project._id], (oldData) => ({
       ...oldData!,
       tasks: sortedTasks,
     }));
-    console.log(sorted);
-    setSortDirection(sortDirection === "asc" ? "desc" : "asc");
   };
 
-  useEffect(() => {}, [sortedTasks]);
+  const handleSortByPriority = () => {
+    setsortPriorityDirection(sortPriorityDirection === "asc" ? "desc" : "asc");
+    setSortedTasks((old) => {
+      return old.sort((a, b) => {
+        if (sortPriorityDirection === "asc") {
+          // Ascending order: low -> medium -> high
+          if (a.priority === "low" && b.priority !== "low") return -1;
+          if (a.priority === "medium" && b.priority === "high") return -1;
+          return 1;
+        } else {
+          // Descending order: high -> medium -> low
+          if (a.priority === "high" && b.priority !== "high") return -1;
+          if (a.priority === "medium" && b.priority === "low") return -1;
+          return 1;
+        }
+      });
+    });
+    queryClient.setQueryData<Project>(["project", project._id], (oldData) => ({
+      ...oldData!,
+      tasks: sortedTasks,
+    }));
+  };
+
+  useEffect(() => {setsortDateDirection(sortDateDirection === "asc" ? "desc" : "asc");}, [sortedTasks]);
+  useEffect(() => {setsortPriorityDirection(sortPriorityDirection === "asc" ? "desc" : "asc");}, [sortedTasks]);
 
   //////
 
@@ -622,11 +647,13 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                   Description
                 </Th>
                 <Th cursor="pointer" onClick={handleSortByDueDate}>
-                  Due Date {sortDirection === "asc" ? "↑" : "↓"}
+                  Due Date {sortDateDirection === "asc" ? "↓" : "↑"}
                 </Th>
                 <Th>Tokens</Th>
                 <Th>Status</Th>
-                <Th>Priority</Th>
+                <Th cursor="pointer" onClick={handleSortByPriority}>
+                  Priority  {sortPriorityDirection === "asc" ? "↓" : "↑"}
+                </Th>
                 {isOwner && <Th>Assigned To</Th>}
                 <Th>Actions</Th>
               </Tr>

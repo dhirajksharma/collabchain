@@ -312,19 +312,22 @@ exports.modifyTask = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("You are not authorized to access this page",403));
   }
 
-  if(req.body.token!=undefined && req.body.token<=0){
-    return next(new ErrorHander("Invalid Token Count",403));
-  }
-  
   let taskId = req.body.taskId;
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
   
-  if(req.body.token > project.tasks[taskIndex].token && (req.body.token - project.tasks[taskIndex].token)<=project.token)
-    project.tasks[taskIndex].token=req.body.token;
-  else if(req.body.token < project.tasks[taskIndex].token){
-    project.token += project.tasks[taskIndex].token - req.body.token;
-    project.tasks[taskIndex].token=req.body.token;
+  if(req.body.token!="" && req.body.token<=0){
+    return next(new ErrorHander("Invalid Token Count",403));
+  }else if(req.body.token!=""){
+    if(req.body.token > project.tasks[taskIndex].token && (req.body.token - project.tasks[taskIndex].token)<=project.token)
+      project.tasks[taskIndex].token=req.body.token;
+    else if(req.body.token < project.tasks[taskIndex].token){
+      project.token += project.tasks[taskIndex].token - req.body.token;
+      project.tasks[taskIndex].token=req.body.token;
+    }
   }
+  
+  
+  
   
   if(req.body.description)
     project.tasks[taskIndex].description=req.body.description;
