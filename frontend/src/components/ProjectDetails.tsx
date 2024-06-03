@@ -268,13 +268,14 @@ export const ProjectDetails = () => {
             p={5}
             alignItems="start"
             bg="white"
+            w="100%"
           >
-            <Tabs w="70vw" colorScheme="teal">
+            <Tabs w="100%" colorScheme="teal">
               <TabList justifyContent={"space-evenly"}>
                 <Tab pt={0}>Project Details</Tab>
                 {isOwner && <Tab pt={0}>Applicant Details</Tab>}
-                {(!isOwner && isApplied && applicationStatus === "approved") ||
-                  (isOwner && <Tab pt={0}>Task Details</Tab>)}
+                {((!isOwner && applicationStatus === "approved") ||
+                  isOwner) && <Tab pt={0}>Task Details</Tab>}
               </TabList>
               <TabPanels>
                 <TabPanel py={0}>

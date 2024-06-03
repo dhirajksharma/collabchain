@@ -19,12 +19,13 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import axios, { AxiosError } from "axios";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "react-query";
 
 interface TaskFormData {
   title: string;
   description: string;
+  files: FileList;
   priority: "low" | "medium" | "high";
   token: number;
   dueDate: Date;
@@ -42,16 +43,17 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
     reset,
   } = useForm<TaskFormData>();
 
-  const { mutateAsync, isLoading, isSuccess } = useMutation(
+  const { mutateAsync } = useMutation(
     async (formData) => {
+      console.log(formData);
       return await axios.post(
         `http://localhost:4000/api/projects/${projectId}/tasks`,
         formData
       );
     },
     {
-      onSuccess: () => {
-        // console.log(data);
+      onSuccess: (data) => {
+        console.log(data);
         toast({
           title: "Success",
           description: "New task created",
@@ -77,7 +79,21 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
 
   const onSubmit: SubmitHandler<TaskFormData> = async (data) => {
     // console.log(data);
-    await mutateAsync(data);
+    // console.log(data.files);
+    const formData = new FormData();
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        console.log(key, data[key]);
+        formData.append(key, data[key]);
+      }
+    }
+    Array.from(data.files).forEach((file) => {
+      console.log(file);
+      formData.append(`files`, file); // append each file
+    });
+    console.log(formData);
+    // await mutateAsync(data);
+    await mutateAsync(formData);
     onClose();
     reset();
   };
@@ -105,6 +121,20 @@ const CreateTaskModal = ({ isOpen, onClose, projectId }) => {
               <Textarea id="description" {...register("description")} />
               <FormErrorMessage>
                 {errors?.description?.message}
+              </FormErrorMessage>
+            </FormControl>
+            <FormControl isRequired isInvalid={!!errors.files}>
+              <FormLabel htmlFor="files">Upload Files</FormLabel>
+              <Input
+                id="files"
+                type="file"
+                multiple
+                {...register("files", {
+                  required: "At least one file is required",
+                })}
+              />
+              <FormErrorMessage>
+                {errors.files && errors.files.message}
               </FormErrorMessage>
             </FormControl>
             <FormControl as="fieldset" isRequired>

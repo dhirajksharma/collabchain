@@ -27,15 +27,16 @@ import {
   FormErrorMessage,
   FormLabel,
   Input,
+  Link,
 } from "@chakra-ui/react";
 import { Task } from "../interfaces/Project";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import axios from "axios";
 import { useForm } from "react-hook-form";
+import { Link as RouterLink } from "react-router-dom";
 
 interface FormValues {
-  key: string;
   files: FileList;
 }
 
@@ -45,6 +46,7 @@ const ActiveTasks = ({ project, isOwner }) => {
   const toast = useToast();
   const queryClient = useQueryClient();
 
+  // Get all tasks for mentee
   const { data: taskData } = useQuery(
     ["task", project._id],
     async () => {
@@ -57,6 +59,7 @@ const ActiveTasks = ({ project, isOwner }) => {
 
   const myTasks = taskData?.data.data;
 
+  // Remove mentee from task
   const { mutateAsync } = useMutation(
     async (data) => {
       return await axios.delete(
@@ -106,16 +109,16 @@ const ActiveTasks = ({ project, isOwner }) => {
     reset,
   } = useForm<FormValues>();
 
+  // Mentee uploads tasks
   const { mutateAsync: mutateSubmit } = useMutation(
     async (data) => {
-      console.log(data);
       const formData = new FormData();
-      formData.append("key", data.key);
+      // formData.append("key", data.key);
 
       Array.from(data.files).forEach((file, index) => {
         formData.append(`files`, file); // append each file
       });
-      console.log(formData);
+      // console.log(formData);
 
       return await axios.put(
         `http://localhost:4000/api/projects/${project._id}/tasks/${data.taskId}`,
@@ -124,7 +127,7 @@ const ActiveTasks = ({ project, isOwner }) => {
     },
     {
       onSuccess: (data) => {
-        console.log(data);
+        // console.log(data);
         toast({
           title: "Success",
           description: "Task documents uploaded",
@@ -151,19 +154,13 @@ const ActiveTasks = ({ project, isOwner }) => {
 
   const onSubmit: SubmitHandler<FormValues> = async (data, e) => {
     const taskId = e.target.getAttribute("taskId");
-    console.log("Key:", data.key);
-    console.log("Files:", data.files);
+    // console.log("Files:", data.files);
 
     const formData = {
-      key: data.key,
       files: data.files,
       taskId,
     };
-    // const files = Array.from(data.files);
-    // files.forEach((file) => {
-    //   console.log(file.name);
-    // });
-    console.log(formData);
+    // console.log(formData);
 
     await mutateSubmit(formData);
 
@@ -190,7 +187,7 @@ const ActiveTasks = ({ project, isOwner }) => {
     },
     {
       onSuccess: (data) => {
-        console.log(data);
+        // console.log(data);
 
         const url = window.URL.createObjectURL(new Blob([data.data]));
         const link = document.createElement("a");
@@ -233,10 +230,14 @@ const ActiveTasks = ({ project, isOwner }) => {
   };
 
   const tasksArray = isOwner ? project.tasks : myTasks;
+  // console.log(tasksArray);
   return (
     <VStack h="400px" maxH="400px" overflowY="scroll">
       {tasksArray
-        ?.filter((task: Task) => task.taskStatus === "active")
+        ?.filter(
+          (task: Task) =>
+            task.taskStatus === "active" || task.taskStatus === "submit"
+        )
         .map((task: Task) => {
           return (
             <Card key={task.id} w="100%" px={4} py={2}>
@@ -315,6 +316,23 @@ const ActiveTasks = ({ project, isOwner }) => {
                     </Tr>
                     <Tr>
                       <Td></Td>
+                      <Td fontWeight="semibold" w="25%" pl={0}></Td>
+                      <Td whiteSpace="normal">
+                        {
+                          <Link
+                            as={RouterLink}
+                            to={`http://localhost:4000/api/projects/${project._id}/tasks/${task.id}/getDocs`}
+                            target="_blank"
+                            color="blue.500"
+                            rel="noopener noreferrer"
+                          >
+                            Supporting Docs
+                          </Link>
+                        }
+                      </Td>
+                    </Tr>
+                    <Tr>
+                      <Td></Td>
                       <Td fontWeight="semibold" w="25%" pl={0}>
                         Due Date
                       </Td>
@@ -329,15 +347,17 @@ const ActiveTasks = ({ project, isOwner }) => {
                       </Td>
                       <Td whiteSpace="normal">{task.token}</Td>
                     </Tr>
-                    <Tr>
-                      <Td></Td>
-                      <Td fontWeight="semibold" w="25%" pl={0}>
-                        Mentee assigned
-                      </Td>
-                      <Td whiteSpace="normal">
-                        {task?.menteesAssigned[0]?.name}
-                      </Td>
-                    </Tr>
+                    {isOwner && (
+                      <Tr>
+                        <Td></Td>
+                        <Td fontWeight="semibold" w="25%" pl={0}>
+                          Mentee assigned
+                        </Td>
+                        <Td whiteSpace="normal">
+                          {task?.menteesAssigned[0]?.name}
+                        </Td>
+                      </Tr>
+                    )}
                     <Tr>
                       <Td></Td>
                       <Td fontWeight="semibold" w="25%" pl={0}>
@@ -393,20 +413,6 @@ const ActiveTasks = ({ project, isOwner }) => {
                         <ModalCloseButton />
                         <ModalBody>
                           <VStack spacing={4} align="stretch">
-                            <FormControl isInvalid={!!errors.key}>
-                              <FormLabel htmlFor="key">Key</FormLabel>
-                              <Input
-                                id="key"
-                                placeholder="Enter key"
-                                {...register("key", {
-                                  required: "Key is required",
-                                })}
-                              />
-                              <FormErrorMessage>
-                                {errors.key && errors.key.message}
-                              </FormErrorMessage>
-                            </FormControl>
-
                             <FormControl isInvalid={!!errors.files}>
                               <FormLabel htmlFor="files">
                                 Upload Files

@@ -41,6 +41,7 @@ const PendingTasks = ({ project, isOwner }) => {
   const toast = useToast();
   const queryClient = useQueryClient();
 
+  // Assign task to mentee
   const { mutateAsync } = useMutation(
     async (data) => {
       return await axios.post(
@@ -85,6 +86,7 @@ const PendingTasks = ({ project, isOwner }) => {
     onClose();
   };
 
+  // console.log(project.tasks);
   return (
     <VStack h="400px" maxH="400px" overflowY="scroll">
       {project.tasks
