@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import PageNotFound from "./pages/404Page";
 import ProtectedRoutes from "./components/routes/ProtectedRoutes";
 import Welcome from "./pages/Welcome";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const queryClient = new QueryClient();
 
@@ -16,9 +17,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-        <Route path="/" element={<Welcome />} />
+          <Route path="/" element={<Welcome />} />
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
+          <Route path="verifymail/:id" element={<VerifyEmail />} />
           <Route element={<ProtectedRoutes />} path="/">
             <Route element={<Home />} path="app/*" index={true} />
           </Route>

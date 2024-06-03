@@ -19,7 +19,7 @@ import {
   VStack,
   Link,
   useToast,
-  Text
+  Text,
 } from "@chakra-ui/react";
 import { Table, Tbody, Tr, Td, TableContainer } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
@@ -30,7 +30,8 @@ import Loader from "./Loader";
 import UpdateProfileModal from "./UpdateProfileModal";
 import UpdatePasswordModal from "./UpdatePasswordModal";
 import { Link as RouterLink } from "react-router-dom";
-import coinImage from '../assets/coin.png';
+import coinImage from "../assets/coin.png";
+import { EmailIcon } from "@chakra-ui/icons";
 
 axios.defaults.withCredentials = true;
 
@@ -110,7 +111,7 @@ export default function Profile() {
     if (resume) {
       let m = mutateResume(resume);
       console.log(m);
-      console.log(queryData.data)
+      console.log(queryData.data);
     }
     handleCloseResumeModal();
   }
@@ -158,12 +159,53 @@ export default function Profile() {
     setIsPasswordModalOpen(false);
   };
 
+  const { mutateAsync: mutateVerifyEmail } = useMutation(
+    async () => {
+      return await axios.post("http://localhost:4000/api/user/verifymail");
+    },
+    {
+      onSuccess: (data) => {
+        // console.log(data.data.message);
+        toast({
+          title: "Success",
+          description: `${data.data.message}`,
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `${error?.response?.data?.message}. Could not send verification mail`,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+      },
+    }
+  );
+
+  const handleVerifyEmailClick = async () => {
+    mutateVerifyEmail();
+  };
+
   if (isLoading) {
     return <Loader />;
   }
 
   if (isSuccess) {
-    const { name, email, organization, phone, aadhar, token } = queryData.data.data;
+    const {
+      name,
+      email,
+      organization,
+      phone,
+      aadhar,
+      token,
+      verifyEmailStatus,
+    } = queryData.data.data;
     const { designation, organization_details } = organization;
     const updateUserData = {
       name,
@@ -185,21 +227,20 @@ export default function Profile() {
           spacing={4}
           marginY="0.5"
         >
-          <Heading
-            as="h1"
-            size="xl"
-            mt={4}
-            mb={4}
-            fontWeight="bold"
-            
-          >
+          <Heading as="h1" size="xl" mt={4} mb={4} fontWeight="bold">
             My Profile
           </Heading>
-          <Flex justifyContent={"space-between"} alignItems={"end"} width={"75%"}>
+          <Flex
+            justifyContent={"space-between"}
+            alignItems={"end"}
+            width={"75%"}
+          >
             <ProfilePhoto userName={name} userId={userId} />
             <Flex alignItems="center" ml={4} direction={"column"}>
               <Image src={coinImage} alt="Coin" boxSize="60px" mr={2} />
-              <Text fontWeight={"semibold"} fontSize={"xl"}>{token} tokens</Text>
+              <Text fontWeight={"semibold"} fontSize={"xl"}>
+                {token} tokens
+              </Text>
             </Flex>
           </Flex>
           <TableContainer
@@ -219,8 +260,20 @@ export default function Profile() {
                 </Tr>
                 <Tr>
                   <Td>Email ID</Td>
-                  <Td fontWeight="semibold" fontSize="lg">
+                  <Td fontWeight="semibold" fontSize="lg" display="flex">
                     {email}
+                    {!verifyEmailStatus && (
+                      <Text
+                        ml={4}
+                        color="blue.500"
+                        textDecoration="underline"
+                        cursor="pointer"
+                        onClick={handleVerifyEmailClick}
+                      >
+                        Verify Email
+                        <EmailIcon ml={1} />
+                      </Text>
+                    )}
                   </Td>
                 </Tr>
                 <Tr>
@@ -259,31 +312,31 @@ export default function Profile() {
                     {designation}
                   </Td>
                 </Tr>
-                  <Tr>
-                    <Td>Resume</Td>
-                    <Td fontWeight="semibold" fontSize="lg">
+                <Tr>
+                  <Td>Resume</Td>
+                  <Td fontWeight="semibold" fontSize="lg">
                     <Flex gap={4}>
-                    {resumeData?
-                      (<Link
-                        as={RouterLink}
-                        to={`http://localhost:4000/api/user/uploads/resume/${userId}`}
-                        target="_blank"
-                        color="blue.500"
-                        rel="noopener noreferrer"
-                      >
-                        Open Resume
-                      </Link>)
-                      : null}
+                      {resumeData ? (
+                        <Link
+                          as={RouterLink}
+                          to={`http://localhost:4000/api/user/uploads/resume/${userId}`}
+                          target="_blank"
+                          color="blue.500"
+                          rel="noopener noreferrer"
+                        >
+                          Open Resume
+                        </Link>
+                      ) : null}
                       <Text
-                      cursor={"pointer"}
-                      color="blue.500"
-                      onClick={handleOpenResumeModal}
+                        cursor={"pointer"}
+                        color="blue.500"
+                        onClick={handleOpenResumeModal}
                       >
                         Upload Resume
                       </Text>
-                      </Flex>
-                    </Td>
-                  </Tr>
+                    </Flex>
+                  </Td>
+                </Tr>
               </Tbody>
             </Table>
           </TableContainer>
