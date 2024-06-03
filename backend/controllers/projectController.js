@@ -8,6 +8,7 @@ const ApiResponse=require("../utils/ApiResponse");
 const fs=require("fs");
 const path=require('path');
 const archiver=require('archiver');
+const sendEmail=require("../utils/sendEmail");
 
 const {
   createProject,
@@ -145,10 +146,19 @@ exports.applyToProject = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
+  const mentor = await User.findById(project.mentor);
+
   project.menteesApplication.push({user: req.user.id});
   user.projects_applied.push(projectId);
   await project.save();
   await user.save();
+
+  await sendEmail({
+    email: mentor.email,
+    subject: `${project.title} | Contributor Application`,
+    message: `You have receiced a new application for the project ${project.title}.`,
+  });
+
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
   
   return res.status(201).json(new ApiResponse(201, project, "Application successful"));
@@ -199,6 +209,12 @@ exports.approveMenteeStatus = catchAsyncErrors(async (req, res, next) => {
   
   let indx = project.menteesApplication.findIndex(application => application.user == userId);
   project.menteesApplication[indx].status = "approved";
+
+  await sendEmail({
+    email: usr.email,
+    subject: `${project.title} | Contributor Application`,
+    message: `Your application for contribution to the project ${project.title} has been approved.`,
+  });
   
   await project.save();
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
@@ -226,6 +242,12 @@ exports.rejectMenteeStatus = catchAsyncErrors(async (req, res, next) => {
 
   let indx = project.menteesApplication.findIndex(application => application.user == userId);
   project.menteesApplication[indx].status = "rejected";
+
+  await sendEmail({
+    email: usr.email,
+    subject: `${project.title} | Contributor Application`,
+    message: `Your application for contribution to the project ${project.title} has been rejected.`,
+  });
   
   await project.save();
   await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
@@ -374,6 +396,13 @@ exports.addTaskContributor = catchAsyncErrors(async (req, res, next) => {
   try{
     await assignUser(projectId, taskId, mentee.ethAddress, mentorAddress);
     await project.save();
+
+    await sendEmail({
+      email: mentee.email,
+      subject: `${project.title} | Tasks Assignment`,
+      message: `You have receiced a new task under the project ${project.title}.`,
+    });
+
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
     return res.status(201).json(new ApiResponse(201, project, "Task assigned successfully"));
   }catch(error){
@@ -415,6 +444,13 @@ exports.removeTaskContributor = catchAsyncErrors(async (req, res, next) => {
   try{
     await removeUser(projectId, taskId, mentee.ethAddress, mentorAddress);
     await project.save();
+
+    await sendEmail({
+      email: mentee.email,
+      subject: `${project.title} | Tasks Assignment`,
+      message: `You have been removed from the task titled:"${project.tasks[taskIndex].title}" under the project ${project.title}.`,
+    });
+
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
 
     return res.status(201).json(new ApiResponse(201, project, "Task unassigned"));
@@ -428,10 +464,12 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
   const projectId = req.params.projectid;
   const taskId = req.params.taskid;
   const project = await Project.findById(projectId);
-
+  
   if (!project) {
     return next(new ErrorHander("Project not found", 400));
   }
+  
+  const mentor = await User.findById(project.mentor);
 
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
   if(project.tasks[taskIndex].menteesAssigned.findIndex(currMentee => currMentee == req.user.id) == -1) {
@@ -475,6 +513,11 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
     }
   }
 
+  await sendEmail({
+    email: mentor.email,
+    subject: `${project.title} | Task Submission`,
+    message: `You have receiced a new submission for the task:"${project.tasks[taskIndex].title}" under the project ${project.title}.`,
+  });
   return res.status(201).json(new ApiResponse(201, null, "upload successful"));
 });
 
@@ -536,16 +579,25 @@ exports.reviewTask = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
+  
   if(req.user.id!=project.mentor){
     return next(new ErrorHander("You are not authorized to access this page",403));
   }
-
+  
   const mentorAddress = req.user.ethAddress;
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
+  const mentee = await User.findById(project.tasks[taskIndex].menteesAssigned[0]);
 
   try {
     await updateTaskStatus(projectId, taskId, mentorAddress, "review");
     project.tasks[taskIndex].taskStatus = 'review';
+
+    await sendEmail({
+      email: mentee.email,
+      subject: `${project.title} | Task Submission`,
+      message: `Your submissions for the task:"${project.tasks[taskIndex].title}" under the project ${project.title} are being reviewed right now.`,
+    });
+
     await project.save();
 
     const directoryPath = path.join(__dirname, `../uploads/${projectId}/${taskId}/mentee`);
@@ -600,6 +652,13 @@ exports.markTaskComplete = catchAsyncErrors(async (req, res, next) => {
       project.tasks[taskIndex].taskStatus = 'active';
     }
     
+    const mentee = await User.findById(project.tasks[taskIndex].menteesAssigned[0]);
+    await sendEmail({
+      email: mentee.email,
+      subject: `${project.title} | Task Submission`,
+      message: `Your submissions for the task:"${project.tasks[taskIndex].title}" under the project ${project.title} has been reviewed and is now marked ${req.body.status}.`,
+    });
+
     await updateTaskStatus(projectId, taskId, mentorAddress, req.body.status);
     await project.save();
   } catch (error) {
