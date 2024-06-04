@@ -280,11 +280,57 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
     }
   );
 
+  const { mutateAsync: mutateMentorDocs } = useMutation(
+    async () =>
+      await axios.get(
+        `http://localhost:4000/api/projects/${project._id}/tasks/${selectedTask?.id}/getDocs`
+      ),
+    {
+      onSuccess: (data) => {
+        toast({
+          title: "Success",
+          description: "Docs Downloaded",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+
+        const url = window.URL.createObjectURL(new Blob([data.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "file.zip"); // Specify the file name and extension
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        queryClient.invalidateQueries(["project", project._id]);
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `${error?.response?.data?.message}. Could not update task to review`,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+      },
+    }
+  );
+
   const handleGetMenteeDocsClick = () => {
     mutateReviewTask();
     handleCloseModal();
   };
 
+  const handleGetMentorDocsClick = (task) => {
+    setSelectedTask(() => task);
+    console.log("TASK:", task);
+    console.log("selected TASK:", selectedTask);
+    mutateMentorDocs();
+    setSelectedTask(null);
+  };
   // Accept or Reject mentee task work
   const { mutateAsync: mutateCompleteTask } = useMutation(
     async (data) => {
@@ -487,7 +533,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                 onSubmit={handleMenteeSubmit(onSubmit)}
                 taskId={selectedTask.id}
               >
-                <ModalHeader>Modal Title</ModalHeader>
+                <ModalHeader>Submit Documents</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
                   <VStack spacing={4} align="stretch">
@@ -812,8 +858,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                         isDisabled={
                                           task.taskStatus === "complete" ||
                                           task.taskStatus === "submit" ||
-                                          task.taskStatus === "review" ||
-                                          isProjectComplete
+                                          task.taskStatus === "review"
                                         }
                                         colorScheme="white"
                                         textColor="black"
@@ -829,8 +874,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                         colorScheme="white"
                                         textColor="black"
                                         isDisabled={
-                                          task.taskStatus !== "pending" ||
-                                          isProjectComplete
+                                          task.taskStatus !== "pending"
                                         }
                                         _hover={{ bg: "#efefef" }}
                                       >
@@ -841,8 +885,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                         colorScheme="white"
                                         textColor="black"
                                         isDisabled={
-                                          task.taskStatus !== "submit" ||
-                                          isProjectComplete
+                                          task.taskStatus !== "submit"
                                         }
                                         _hover={{ bg: "#efefef" }}
                                       >
@@ -853,8 +896,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                         colorScheme="white"
                                         textColor="black"
                                         isDisabled={
-                                          task.taskStatus !== "review" ||
-                                          isProjectComplete
+                                          task.taskStatus !== "review"
                                         }
                                         _hover={{ bg: "#efefef" }}
                                       >
@@ -865,8 +907,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                         textColor="black"
                                         onClick={() => handleOpenModal(task)}
                                         isDisabled={
-                                          task.taskStatus !== "active" ||
-                                          isProjectComplete
+                                          task.taskStatus !== "active"
                                         }
                                         _hover={{ bg: "#efefef" }}
                                       >
@@ -875,18 +916,29 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                     </>
                                   )}
                                   {!isOwner && (
-                                    <Button
-                                      colorScheme="white"
-                                      textColor="black"
-                                      onClick={() => handleOpenModal(task)}
-                                      isDisabled={
-                                        task.taskStatus !== "active" ||
-                                        isProjectComplete
-                                      }
-                                      _hover={{ bg: "#efefef" }}
-                                    >
-                                      Submit Documents
-                                    </Button>
+                                    <>
+                                      <Button
+                                        colorScheme="white"
+                                        textColor="black"
+                                        onClick={() => handleOpenModal(task)}
+                                        isDisabled={
+                                          task.taskStatus !== "active"
+                                        }
+                                        _hover={{ bg: "#efefef" }}
+                                      >
+                                        Submit Documents
+                                      </Button>
+                                      <Button
+                                        colorScheme="white"
+                                        textColor="black"
+                                        onClick={() =>
+                                          handleGetMentorDocsClick(task)
+                                        }
+                                        _hover={{ bg: "#efefef" }}
+                                      >
+                                        Get Mentor Docs
+                                      </Button>
+                                    </>
                                   )}
                                 </VStack>
                               </PopoverBody>
