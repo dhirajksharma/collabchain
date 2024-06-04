@@ -9,6 +9,7 @@ import PageNotFound from "./pages/404Page";
 import ProtectedRoutes from "./components/routes/ProtectedRoutes";
 import Welcome from "./pages/Welcome";
 import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ function App() {
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
           <Route path="verifymail/:id" element={<VerifyEmail />} />
+          <Route path="password/reset/:id" element={<ResetPassword />} />
           <Route element={<ProtectedRoutes />} path="/">
             <Route element={<Home />} path="app/*" index={true} />
           </Route>

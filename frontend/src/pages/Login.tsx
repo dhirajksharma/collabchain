@@ -12,12 +12,21 @@ import {
   Link as ChakraLink,
   Spinner,
   useToast,
+  useDisclosure,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useNavigate, Link as ReactRouterLink } from "react-router-dom";
 import axios from "axios";
 import { useMutation } from "react-query";
 import { useCookies } from "react-cookie";
+import VerifyEmail from "./VerifyEmail";
 
 axios.defaults.withCredentials = true;
 
@@ -83,6 +92,47 @@ export default function Login() {
     }
   }
 
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [verifyMail, setVerifyMail] = useState("");
+
+  const { mutateAsync: mutateVerifyEmail } = useMutation(
+    async () => {
+      const email = verifyMail;
+      console.log(email);
+      return await axios.post("http://localhost:4000/api/user/forgotpassword", {
+        email,
+      });
+    },
+    {
+      onSuccess: (data) => {
+        toast({
+          title: "Success",
+          description: `${data.data.message}`,
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `${error?.response?.data?.message}. Could not send email`,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+      },
+    }
+  );
+
+  const handleVerifyEmailClick = () => {
+    mutateVerifyEmail();
+    setVerifyMail("");
+    onClose();
+  };
+
   if (isLoading) {
     return (
       <Spinner
@@ -137,6 +187,15 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <Text
+                  mt={3}
+                  color="blue.500"
+                  cursor="pointer"
+                  textDecoration="underline"
+                  onClick={onOpen}
+                >
+                  Forgot Password?
+                </Text>
               </FormControl>
               <Stack marginTop="8" spacing={4}>
                 <Stack>
@@ -160,6 +219,35 @@ export default function Login() {
           </form>
         </Box>
       </Stack>
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Verify Email</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <form onSubmit={handleSubmit}>
+              <Stack spacing={4}>
+                <FormControl id="email" isRequired>
+                  <FormLabel>Enter your registered Email id</FormLabel>
+                  <Input
+                    type="email"
+                    value={verifyMail}
+                    onChange={(e) => setVerifyMail(e.target.value)}
+                  />
+                </FormControl>
+              </Stack>
+            </form>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={handleVerifyEmailClick}>
+              Send Reset Link
+            </Button>
+            <Button variant="ghost" onClick={onClose}>
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Flex>
   );
 }
