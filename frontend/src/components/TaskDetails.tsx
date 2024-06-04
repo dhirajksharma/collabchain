@@ -798,15 +798,6 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                                           {task?.menteesAssigned[0]?.email}
                                         </Text>
                                       </HStack>
-                                      <HStack>
-                                        <Text
-                                          fontWeight="bold"
-                                          color="blue.500"
-                                          textDecoration="underline"
-                                        >
-                                          View Profile
-                                        </Text>
-                                      </HStack>
                                     </VStack>
                                   ) : (
                                     <Text textAlign={"center"}>

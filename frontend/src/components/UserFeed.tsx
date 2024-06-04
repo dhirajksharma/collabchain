@@ -51,6 +51,14 @@ export const UserFeed = () => {
       (project: Project) => project.mentor === userId
     );
 
+    const inProgressProjects = projects.filter((project: any) => {
+      return new Date(project.endDate) > new Date();
+    });
+
+    const completedProjects = projects.filter((project: any) => {
+      return new Date(project.endDate) < new Date();
+    });
+
     return (
       <HStack
         w="full"
@@ -62,14 +70,8 @@ export const UserFeed = () => {
         spacing={4}
         marginY="0.5"
       >
-        <Heading
-          as="h1"
-          size="xl"
-          mt={4}
-          mb={4}
-          fontWeight="bold"
-        >
-          My Projects
+        <Heading as="h1" size="xl" mt={4} mb={4} fontWeight="bold">
+          My Created Projects
         </Heading>
         <VStack
           spacing={4}
@@ -97,18 +99,26 @@ export const UserFeed = () => {
 
             <TabPanels>
               <TabPanel h="full">
-                {projects.length === 0 ? (
+                {inProgressProjects.length === 0 ? (
                   <NoContent />
                 ) : (
                   <SimpleGrid columns={2} spacing={4}>
-                    {projects.map((project: any) => (
+                    {inProgressProjects.map((project: any) => (
                       <ProjectCard key={project._id} project={project} />
                     ))}
                   </SimpleGrid>
                 )}
               </TabPanel>
               <TabPanel>
-                <NoContent />
+                {completedProjects.length === 0 ? (
+                  <NoContent />
+                ) : (
+                  <SimpleGrid columns={2} spacing={4}>
+                    {completedProjects.map((project: any) => (
+                      <ProjectCard key={project._id} project={project} />
+                    ))}
+                  </SimpleGrid>
+                )}
               </TabPanel>
               {/* <TabPanel>
               <p>three!</p>
