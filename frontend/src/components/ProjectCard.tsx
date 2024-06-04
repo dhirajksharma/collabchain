@@ -28,12 +28,17 @@ export const ProjectCard = ({ project, isOwner = true }) => {
       cursor="pointer"
       onClick={handleClick}
     >
-      <Flex justifyContent="space-between" alignItems="flex-start" mb="2" gap={4}>
-        <Badge colorScheme="teal" mt={0.5}>{project.domain}</Badge>
+      <Flex
+        justifyContent="space-between"
+        alignItems="flex-start"
+        mb="2"
+        gap={4}
+      >
+        <Badge colorScheme="teal" mt={0.5}>
+          {project.domain}
+        </Badge>
         <Text fontSize="sm" fontWeight="semibold" textAlign={"end"}>
           {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
-          <br></br>
-          ({durationInDays} days)
         </Text>
       </Flex>
       <Text fontWeight="bold" fontSize="xl" mb="2" textAlign={"left"}>

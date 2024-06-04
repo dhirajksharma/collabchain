@@ -35,6 +35,11 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
         await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
         await user.populate('organization.organization_details')
 
+        await sendEmail({
+            email: user.email,
+            subject: `Collabchain | Account Registration`,
+            message: `You have successfully registered on our platform Collabchain.`,
+        });
         sendToken(user, 201, res);
     } else {
         return next(new ErrorHander("User Already exists", 400));
@@ -65,6 +70,12 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
 
     await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
+
+    await sendEmail({
+        email: user.email,
+        subject: `Collabchain | Account Login`,
+        message: `We have recieved a new login from your account.`,
+    });
 
     sendToken(user, 200, res);
 });
@@ -140,6 +151,11 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
+    await sendEmail({
+        email: user.email,
+        subject: `Collabchain | Password Reset`,
+        message: `You have successfully reset your account password.`,
+    });
     await user.save();
 
     await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
@@ -166,7 +182,7 @@ exports.getUser = catchAsyncErrors(async (req, res, next) => {
 // Get Logged-In User Detail
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user.id);
-
+    console.log("User controller", user);
     await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
 

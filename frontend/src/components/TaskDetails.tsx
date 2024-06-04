@@ -70,7 +70,8 @@ interface TaskProps {
 const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
   const toast = useToast();
   const queryClient = useQueryClient();
-  
+  const isProjectComplete = new Date(project.endDate) < new Date();
+
   const {
     data: userData,
     isLoading,
@@ -91,12 +92,16 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
   };
 
   const [sortedTasks, setSortedTasks] = useState<Task[]>(project.tasks);
-  const [sortDateDirection, setsortDateDirection] = useState<"asc" | "desc">("asc");
-  const [sortPriorityDirection, setsortPriorityDirection] = useState<"asc" | "desc">("asc");
+  const [sortDateDirection, setsortDateDirection] = useState<"asc" | "desc">(
+    "asc"
+  );
+  const [sortPriorityDirection, setsortPriorityDirection] = useState<
+    "asc" | "desc"
+  >("asc");
 
   const handleSortByDueDate = () => {
     setsortDateDirection(sortDateDirection === "asc" ? "desc" : "asc");
-    setSortedTasks((old)=>{
+    setSortedTasks((old) => {
       return old.sort((a, b) => {
         const dateA = new Date(a.dueDate).getTime();
         const dateB = new Date(b.dueDate).getTime();
@@ -132,8 +137,12 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
     }));
   };
 
-  useEffect(() => {setsortDateDirection(sortDateDirection === "asc" ? "desc" : "asc");}, [sortedTasks]);
-  useEffect(() => {setsortPriorityDirection(sortPriorityDirection === "asc" ? "desc" : "asc");}, [sortedTasks]);
+  useEffect(() => {
+    setsortDateDirection(sortDateDirection === "asc" ? "desc" : "asc");
+  }, [sortedTasks]);
+  useEffect(() => {
+    setsortPriorityDirection(sortPriorityDirection === "asc" ? "desc" : "asc");
+  }, [sortedTasks]);
 
   //////
 
@@ -181,7 +190,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
 
   const { mutateAsync: mutateRemoveTask } = useMutation(
     async (data) => {
-      console.log("remove data:", data)
+      console.log("remove data:", data);
       return await axios.delete(
         `http://localhost:4000/api/projects/${project._id}/tasks/${data.taskId}/${data.menteeId}`
       );
@@ -230,8 +239,6 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
     mutateRemoveTask(postData);
     handleCloseModal();
   };
-
-
 
   // Review task done by mentee
   const { mutateAsync: mutateReviewTask } = useMutation(
@@ -617,7 +624,11 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                 </AlertDescription>
               </VStack>
             </Alert>
-            <Button colorScheme="blue" onClick={openCreateTaskModal}>
+            <Button
+              colorScheme="blue"
+              onClick={openCreateTaskModal}
+              isDisabled={isProjectComplete}
+            >
               <Icon as={FaPlusCircle} mr={2} mt={1} />
               Create Task
             </Button>
@@ -652,7 +663,7 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
                 <Th>Tokens</Th>
                 <Th>Status</Th>
                 <Th cursor="pointer" onClick={handleSortByPriority}>
-                  Priority  {sortPriorityDirection === "asc" ? "↓" : "↑"}
+                  Priority {sortPriorityDirection === "asc" ? "↓" : "↑"}
                 </Th>
                 {isOwner && <Th>Assigned To</Th>}
                 <Th>Actions</Th>
@@ -666,201 +677,225 @@ const TaskDetails: React.FC<TaskProps> = ({ project, isOwner }: TaskProps) => {
               }}
             >
               {project.tasks?.map((task: Task, index: number) => {
-                return ( (isOwner || task?.menteesAssigned[0]?._id == userData?.data.data._id) && 
-                  <>
-                    <Tr key={task.id}>
-                      <Td w="5%">{index + 1}</Td>
-                      <Td w="10%">{task.title}</Td>
-                      <Td w="50%" whiteSpace="normal">
-                        {task.description}
-                      </Td>
-                      <Td>
-                        {new Date(task.dueDate).toISOString().split("T")[0]}
-                      </Td>
-                      <Td>{task.token}</Td>
-                      <Td cursor="pointer">
-                        <Badge
-                          w="full"
-                          variant="solid"
-                          colorScheme={
-                            (task.taskStatus === "pending" && "blue") || "teal"
-                          }
-                          textAlign="center"
-                        >
-                          {(task.taskStatus === "submit" && "Submitted") ||
-                            (task.taskStatus === "pending" && "Unassigned") ||
-                            (task.taskStatus === "review" && "Under Review") ||
-                            task.taskStatus}
-                        </Badge>
-                      </Td>
-                      <Td>
-                        <Badge
-                          variant="outline"
-                          w="full"
-                          textAlign="center"
-                          colorScheme={
-                            (task.priority === "low" && "green") ||
-                            (task.priority === "medium" && "orange") ||
-                            ((task.priority === "high" && "red") as string)
-                          }
-                        >
-                          {task.priority}
-                        </Badge>
-                      </Td>
-                      {isOwner && (
+                return (
+                  (isOwner ||
+                    task?.menteesAssigned[0]?._id ==
+                      userData?.data.data._id) && (
+                    <>
+                      <Tr key={task.id}>
+                        <Td w="5%">{index + 1}</Td>
+                        <Td w="10%">{task.title}</Td>
+                        <Td w="50%" whiteSpace="normal">
+                          {task.description}
+                        </Td>
+                        <Td>
+                          {new Date(task.dueDate).toISOString().split("T")[0]}
+                        </Td>
+                        <Td>{task.token}</Td>
+                        <Td cursor="pointer">
+                          <Badge
+                            w="full"
+                            variant="solid"
+                            colorScheme={
+                              (task.taskStatus === "pending" && "blue") ||
+                              "teal"
+                            }
+                            textAlign="center"
+                          >
+                            {(task.taskStatus === "submit" && "Submitted") ||
+                              (task.taskStatus === "pending" && "Unassigned") ||
+                              (task.taskStatus === "review" &&
+                                "Under Review") ||
+                              task.taskStatus}
+                          </Badge>
+                        </Td>
+                        <Td>
+                          <Badge
+                            variant="outline"
+                            w="full"
+                            textAlign="center"
+                            colorScheme={
+                              (task.priority === "low" && "green") ||
+                              (task.priority === "medium" && "orange") ||
+                              ((task.priority === "high" && "red") as string)
+                            }
+                          >
+                            {task.priority}
+                          </Badge>
+                        </Td>
+                        {isOwner && (
+                          <Td>
+                            <Popover trigger="hover" placement="bottom-start">
+                              <PopoverTrigger>
+                                <Avatar
+                                  size="md"
+                                  name={task?.menteesAssigned[0]?.name}
+                                  src={`http://localhost:4000/api/user/uploads/avatar/${task?.menteesAssigned[0]?._id}`}
+                                  cursor="pointer"
+                                />
+                              </PopoverTrigger>
+                              <PopoverContent>
+                                <PopoverArrow />
+                                <PopoverCloseButton />
+                                <PopoverBody>
+                                  {task.taskStatus != "pending" ? (
+                                    <VStack align="start">
+                                      <HStack>
+                                        <Text fontWeight="bold">Name:</Text>
+                                        <Text>
+                                          {task?.menteesAssigned[0]?.name}
+                                        </Text>
+                                      </HStack>
+                                      <HStack>
+                                        <Text fontWeight="bold">Email:</Text>
+                                        <Text>
+                                          {task?.menteesAssigned[0]?.email}
+                                        </Text>
+                                      </HStack>
+                                      <HStack>
+                                        <Text
+                                          fontWeight="bold"
+                                          color="blue.500"
+                                          textDecoration="underline"
+                                        >
+                                          View Profile
+                                        </Text>
+                                      </HStack>
+                                    </VStack>
+                                  ) : (
+                                    <Text textAlign={"center"}>
+                                      You have not assigned<br></br>this task to
+                                      anyone yet
+                                    </Text>
+                                  )}
+                                </PopoverBody>
+                              </PopoverContent>
+                            </Popover>
+                          </Td>
+                        )}
                         <Td>
                           <Popover trigger="hover" placement="bottom-start">
                             <PopoverTrigger>
-                              <Avatar
-                                size="md"
-                                name={task?.menteesAssigned[0]?.name}
-                                src={`http://localhost:4000/api/user/uploads/avatar/${task?.menteesAssigned[0]?._id}`}
-                                cursor="pointer"
+                              <IconButton
+                                icon={<FaCog />}
+                                aria-label="Settings"
+                                variant="link"
+                                colorScheme="gray"
                               />
                             </PopoverTrigger>
                             <PopoverContent>
                               <PopoverArrow />
                               <PopoverCloseButton />
+                              <PopoverHeader fontWeight="semibold">
+                                Options
+                              </PopoverHeader>
                               <PopoverBody>
-                              {task.taskStatus != "pending"?
-                                (<VStack align="start">
-                                  <HStack>
-                                    <Text fontWeight="bold">Name:</Text>
-                                    <Text>
-                                      {task?.menteesAssigned[0]?.name}
-                                    </Text>
-                                  </HStack>
-                                  <HStack>
-                                    <Text fontWeight="bold">Email:</Text>
-                                    <Text>
-                                      {task?.menteesAssigned[0]?.email}
-                                    </Text>
-                                  </HStack>
-                                  <HStack>
-                                    <Text
-                                      fontWeight="bold"
-                                      color="blue.500"
-                                      textDecoration="underline"
+                                <VStack
+                                  align="start"
+                                  divider={<StackDivider borderWidth="1px" />}
+                                  spacing="0"
+                                  alignItems="flex-start"
+                                  mt={0}
+                                  sx={{
+                                    "& > button": {
+                                      cursor: "pointer",
+                                      w: "full",
+                                      fontSize: "sm",
+                                      borderRadius: 0,
+                                      textAlign: "start",
+                                    },
+                                  }}
+                                >
+                                  {isOwner && (
+                                    <>
+                                      <Button
+                                        isDisabled={
+                                          task.taskStatus === "complete" ||
+                                          task.taskStatus === "submit" ||
+                                          task.taskStatus === "review" ||
+                                          isProjectComplete
+                                        }
+                                        colorScheme="white"
+                                        textColor="black"
+                                        onClick={() =>
+                                          openUpdateTaskModal(task)
+                                        }
+                                        _hover={{ bg: "#efefef" }}
+                                      >
+                                        Update Task
+                                      </Button>
+                                      <Button
+                                        onClick={() => handleOpenModal(task)}
+                                        colorScheme="white"
+                                        textColor="black"
+                                        isDisabled={
+                                          task.taskStatus !== "pending" ||
+                                          isProjectComplete
+                                        }
+                                        _hover={{ bg: "#efefef" }}
+                                      >
+                                        Assign Mentee
+                                      </Button>
+                                      <Button
+                                        onClick={() => handleOpenModal(task)}
+                                        colorScheme="white"
+                                        textColor="black"
+                                        isDisabled={
+                                          task.taskStatus !== "submit" ||
+                                          isProjectComplete
+                                        }
+                                        _hover={{ bg: "#efefef" }}
+                                      >
+                                        Get documents
+                                      </Button>
+                                      <Button
+                                        onClick={() => handleOpenModal(task)}
+                                        colorScheme="white"
+                                        textColor="black"
+                                        isDisabled={
+                                          task.taskStatus !== "review" ||
+                                          isProjectComplete
+                                        }
+                                        _hover={{ bg: "#efefef" }}
+                                      >
+                                        Finalize task
+                                      </Button>
+                                      <Button
+                                        colorScheme="white"
+                                        textColor="black"
+                                        onClick={() => handleOpenModal(task)}
+                                        isDisabled={
+                                          task.taskStatus !== "active" ||
+                                          isProjectComplete
+                                        }
+                                        _hover={{ bg: "#efefef" }}
+                                      >
+                                        Remove contributor
+                                      </Button>
+                                    </>
+                                  )}
+                                  {!isOwner && (
+                                    <Button
+                                      colorScheme="white"
+                                      textColor="black"
+                                      onClick={() => handleOpenModal(task)}
+                                      isDisabled={
+                                        task.taskStatus !== "active" ||
+                                        isProjectComplete
+                                      }
+                                      _hover={{ bg: "#efefef" }}
                                     >
-                                      View Profile
-                                    </Text>
-                                  </HStack>
-                                </VStack>):
-                                (
-                                  <Text textAlign={"center"}>You have not assigned<br></br>this task to anyone yet</Text>
-                                )
-                              }
+                                      Submit Documents
+                                    </Button>
+                                  )}
+                                </VStack>
                               </PopoverBody>
                             </PopoverContent>
                           </Popover>
                         </Td>
-                      )}
-                      <Td>
-                        <Popover trigger="hover" placement="bottom-start">
-                          <PopoverTrigger>
-                            <IconButton
-                              icon={<FaCog />}
-                              aria-label="Settings"
-                              variant="link"
-                              colorScheme="gray"
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent>
-                            <PopoverArrow />
-                            <PopoverCloseButton />
-                            <PopoverHeader fontWeight="semibold">
-                              Options
-                            </PopoverHeader>
-                            <PopoverBody>
-                              <VStack
-                                align="start"
-                                divider={<StackDivider borderWidth="1px" />}
-                                spacing="0"
-                                alignItems="flex-start"
-                                mt={0}
-                                sx={{
-                                  "& > button": {
-                                    cursor: "pointer",
-                                    w: "full",
-                                    fontSize: "sm",
-                                    borderRadius: 0,
-                                    textAlign: "start",
-                                  },
-                                }}
-                              >
-                                {isOwner && (
-                                  <>
-                                    <Button
-                                      isDisabled={
-                                        task.taskStatus === "complete" ||
-                                        task.taskStatus === "submit" ||
-                                        task.taskStatus === "review"
-                                      }
-                                      colorScheme="white"
-                                      textColor="black"
-                                      onClick={() => openUpdateTaskModal(task)}
-                                      _hover={{bg: "#efefef"}}
-                                    >
-                                      Update Task
-                                    </Button>
-                                    <Button
-                                      onClick={() => handleOpenModal(task)}
-                                      colorScheme="white"
-                                      textColor="black"
-                                      isDisabled={task.taskStatus !== "pending"}
-                                      _hover={{bg: "#efefef"}}
-                                    >
-                                      Assign Mentee
-                                    </Button>
-                                    <Button
-                                      onClick={() => handleOpenModal(task)}
-                                      colorScheme="white"
-                                      textColor="black"
-                                      isDisabled={task.taskStatus !== "submit"}
-                                      _hover={{bg: "#efefef"}}
-                                    >
-                                      Get documents
-                                    </Button>
-                                    <Button
-                                      onClick={() => handleOpenModal(task)}
-                                      colorScheme="white"
-                                      textColor="black"
-                                      isDisabled={task.taskStatus !== "review"}
-                                      _hover={{bg: "#efefef"}}
-                                    >
-                                      Finalize task
-                                    </Button>
-                                    <Button
-                                      colorScheme="white"
-                                      textColor="black"
-                                      onClick={() => handleOpenModal(task)}
-                                      isDisabled={
-                                        task.taskStatus !== "active"
-                                      }
-                                      _hover={{bg: "#efefef"}}
-                                    >
-                                      Remove contributor
-                                    </Button>
-                                  </>
-                                )}
-                                {!isOwner && (
-                                  <Button
-                                    colorScheme="white"
-                                    textColor="black"
-                                    onClick={() => handleOpenModal(task)}
-                                    isDisabled={task.taskStatus !== "active"}
-                                    _hover={{bg: "#efefef"}}
-                                  >
-                                    Submit Documents
-                                  </Button>
-                                )}
-                              </VStack>
-                            </PopoverBody>
-                          </PopoverContent>
-                        </Popover>
-                      </Td>
-                    </Tr>
-                  </>
+                      </Tr>
+                    </>
+                  )
                 );
               })}
               {renderModal()}

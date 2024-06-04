@@ -53,27 +53,34 @@ const MainFeed: React.FC = () => {
   if (isSuccess) {
     const projects = data?.data?.data;
     const userData = queryData?.data?.data;
-    console.log(projects);
+    // console.log(projects);
 
     let filteredProjects = projects?.filter((project: any) => {
+      const isProjectComplete = new Date(project.endDate) < new Date();
       if (filter === "all-projects") return true;
       else if (filter === "applied")
         return (
           project.menteesApplication.find(
             (application: MenteeApplication) => application?.user === userId
-          )?.status === "pending"
+          )?.status === "pending" && !isProjectComplete
         );
       else if (filter === "in-progress")
         return (
           project.menteesApplication.find(
             (application: MenteeApplication) => application?.user === userId
-          )?.status === "approved"
+          )?.status === "approved" && !isProjectComplete
         );
       else if (filter === "rejected")
         return (
           project.menteesApplication.find(
             (application: MenteeApplication) => application?.user === userId
-          )?.status === "rejected"
+          )?.status === "rejected" && !isProjectComplete
+        );
+      else if (filter === "completed")
+        return (
+          project.menteesApplication.find(
+            (application: MenteeApplication) => application?.user === userId
+          ) && isProjectComplete
         );
       return true;
     });
@@ -118,6 +125,7 @@ const MainFeed: React.FC = () => {
             <option value="applied">Applied</option>
             <option value="in-progress">In-Progress</option>
             <option value="rejected">Rejected</option>
+            <option value="completed">Completed</option>
           </Select>
         </HStack>
         <Grid templateColumns="repeat(2, 1fr)" justifyItems="center">

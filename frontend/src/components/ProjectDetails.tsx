@@ -180,6 +180,9 @@ export const ProjectDetails = () => {
       (application: MenteeApplication) => application?.user?._id === userId
     )?.status;
 
+    // console.log(new Date(project.endDate), new Date());
+    const isProjectComplete = new Date(project.endDate) < new Date();
+    console.log(isProjectComplete);
     return (
       <>
         <VStack
@@ -204,16 +207,26 @@ export const ProjectDetails = () => {
             <Box>
               <Badge
                 variant="solid"
-                colorScheme={project.menteesRequired > 0 ? "green" : "orange"}
+                colorScheme={
+                  isProjectComplete
+                    ? "red"
+                    : project.menteesRequired > 0
+                    ? "green"
+                    : "orange"
+                }
                 fontSize="xl"
                 mt={1}
                 textTransform={"none"}
               >
-                {project.menteesRequired > 0 ? "Recruiting" : "In-Progress"}
+                {isProjectComplete
+                  ? "Completed"
+                  : project.menteesRequired > 0
+                  ? "Recruiting"
+                  : "In-Progress"}
               </Badge>
             </Box>
           </HStack>
-          {!isOwner && !isApplied && (
+          {!isOwner && !isApplied && !isProjectComplete && (
             <Alert status="warning" w="50%" variant="top-accent">
               <AlertIcon />
               <VStack spacing={0} alignItems="start">
@@ -224,43 +237,56 @@ export const ProjectDetails = () => {
               </VStack>
             </Alert>
           )}
-          {!isOwner && isApplied && applicationStatus === "pending" && (
-            <Alert status="info" w="50%" variant="top-accent">
-              <AlertIcon />
-              <VStack spacing={0} alignItems="start">
-                <AlertTitle>Application Status</AlertTitle>
-                <AlertDescription>
-                  You have successfully applied to this project. Awaiting
-                  response
-                </AlertDescription>
-                <Button size="sm" colorScheme="yellow" onClick={handleWithdraw}>
-                  Withdraw
-                </Button>
-              </VStack>
-            </Alert>
-          )}
-          {!isOwner && isApplied && applicationStatus === "approved" && (
-            <Alert status="success" w="50%" variant="top-accent">
-              <AlertIcon />
-              <VStack spacing={0} alignItems="start">
-                <AlertTitle>Application Status</AlertTitle>
-                <AlertDescription>
-                  Congratulations! Your application has been accepted
-                </AlertDescription>
-              </VStack>
-            </Alert>
-          )}
-          {!isOwner && isApplied && applicationStatus === "rejected" && (
-            <Alert status="error" w="50%" variant="top-accent">
-              <AlertIcon />
-              <VStack spacing={0} alignItems="start">
-                <AlertTitle>Application Status</AlertTitle>
-                <AlertDescription>
-                  Your application has been rejected 🥹
-                </AlertDescription>
-              </VStack>
-            </Alert>
-          )}
+          {!isOwner &&
+            isApplied &&
+            !isProjectComplete &&
+            applicationStatus === "pending" && (
+              <Alert status="info" w="50%" variant="top-accent">
+                <AlertIcon />
+                <VStack spacing={0} alignItems="start">
+                  <AlertTitle>Application Status</AlertTitle>
+                  <AlertDescription>
+                    You have successfully applied to this project. Awaiting
+                    response
+                  </AlertDescription>
+                  <Button
+                    size="sm"
+                    colorScheme="yellow"
+                    onClick={handleWithdraw}
+                  >
+                    Withdraw
+                  </Button>
+                </VStack>
+              </Alert>
+            )}
+          {!isOwner &&
+            isApplied &&
+            !isProjectComplete &&
+            applicationStatus === "approved" && (
+              <Alert status="success" w="50%" variant="top-accent">
+                <AlertIcon />
+                <VStack spacing={0} alignItems="start">
+                  <AlertTitle>Application Status</AlertTitle>
+                  <AlertDescription>
+                    Congratulations! Your application has been accepted
+                  </AlertDescription>
+                </VStack>
+              </Alert>
+            )}
+          {!isOwner &&
+            isApplied &&
+            !isProjectComplete &&
+            applicationStatus === "rejected" && (
+              <Alert status="error" w="50%" variant="top-accent">
+                <AlertIcon />
+                <VStack spacing={0} alignItems="start">
+                  <AlertTitle>Application Status</AlertTitle>
+                  <AlertDescription>
+                    Your application has been rejected 🥹
+                  </AlertDescription>
+                </VStack>
+              </Alert>
+            )}
           <VStack
             spacing={4}
             borderWidth="1px"
@@ -337,7 +363,7 @@ export const ProjectDetails = () => {
                         </Tr>
                       </Tbody>
                     </Table>
-                    {isOwner && (
+                    {isOwner && !isProjectComplete && (
                       <Button colorScheme="blue" onClick={openModal}>
                         Update Project Details
                       </Button>

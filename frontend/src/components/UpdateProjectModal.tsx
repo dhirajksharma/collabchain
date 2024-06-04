@@ -119,12 +119,8 @@ const UpdateProjectModal = ({
                 {...register("menteesRequired", {
                   required: "Field is required",
                   min: {
-                    value:
-                      projectData.menteesRequired -
-                      projectData.menteesApproved.length,
-                    message: `Value must be greater than or equal to " + ${
-                      projectData.menteesRequired -
-                      projectData.menteesApproved.length
+                    value: 0,
+                    message: `Value must be greater than or equal to 0"
                     }`,
                   },
                 })}

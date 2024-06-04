@@ -85,7 +85,7 @@ const ApplicantCard = ({
           duration: 3000,
           isClosable: true,
         });
-        queryClient.invalidateQueries("projects");
+        queryClient.invalidateQueries(["projects", projectId]);
       },
       // onError callback
       onError: (error: AxiosError) => {
@@ -167,6 +167,7 @@ const ApplicantCard = ({
                   <Tr>
                     <Td fontWeight="semibold" w="40%" pl={0}>
                       Name
+                      {console.log(mentee)}
                     </Td>
                     <Td whiteSpace="normal">{mentee?.name}</Td>
                   </Tr>

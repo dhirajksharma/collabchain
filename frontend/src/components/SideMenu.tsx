@@ -133,7 +133,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
       <NavLink to="projects">
         <NavItem>
           <Icon as={FaProjectDiagram} mr={2} />
-          My Projects
+          My Created Projects
         </NavItem>
       </NavLink>
       <NavLink to="post-project">

@@ -22,6 +22,8 @@ interface ApplicantDetailsProps {
 }
 
 const ApplicantDetails = ({ project }: ApplicantDetailsProps) => {
+  const isProjectComplete = new Date(project.endDate) < new Date();
+
   return (
     <>
       <TableContainer mb={5}>
@@ -38,39 +40,39 @@ const ApplicantDetails = ({ project }: ApplicantDetailsProps) => {
             </Tr>
             <Tr>
               <Td fontWeight="semibold" pl={0}>
-                Applicants remaining to be selected
+                Total mentees required
               </Td>
-              <Td whiteSpace="normal">
-                {project?.menteesRequired - project?.menteesApproved?.length}
-              </Td>
+              <Td whiteSpace="normal">{project?.menteesRequired}</Td>
             </Tr>
           </Tbody>
         </Table>
       </TableContainer>
       <Tabs variant="enclosed-colored">
         <TabList>
-          <Tab>Pending</Tab>
+          {!isProjectComplete && <Tab>Pending</Tab>}
           <Tab>Accepted</Tab>
         </TabList>
 
         <TabPanels>
-          <TabPanel>
-            <Box overflowY="scroll" maxH="300px">
-              {project.menteesApplication
-                ?.filter((application) => application.status === "pending")
-                .map((application, index) => {
-                  return (
-                    <ApplicantCard
-                      key={application?._id}
-                      application={application}
-                      index={index + 1}
-                      projectId={project._id}
-                      status={application.status}
-                    />
-                  );
-                })}
-            </Box>
-          </TabPanel>
+          {!isProjectComplete && (
+            <TabPanel>
+              <Box overflowY="scroll" maxH="300px">
+                {project.menteesApplication
+                  ?.filter((application) => application.status === "pending")
+                  .map((application, index) => {
+                    return (
+                      <ApplicantCard
+                        key={application?._id}
+                        application={application}
+                        index={index + 1}
+                        projectId={project._id}
+                        status={application.status}
+                      />
+                    );
+                  })}
+              </Box>
+            </TabPanel>
+          )}
           <TabPanel px={0}>
             <Box overflowY="scroll" maxH="300px">
               {project.menteesApplication
