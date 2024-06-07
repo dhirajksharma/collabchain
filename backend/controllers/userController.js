@@ -71,18 +71,6 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
     await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
 
-    await sendEmail({
-        email: user.email,
-        subject: `Collabchain | Account Login`,
-        message: `We have recieved a new login from your account.`,
-    });
-
-    await sendEmail({
-        email: user.email,
-        subject: `Collabchain | Account Login`,
-        message: `We have recieved a new login from your account.`,
-    });
-
     sendToken(user, 200, res);
 });
 
