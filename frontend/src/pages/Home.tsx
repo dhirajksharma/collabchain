@@ -1,33 +1,30 @@
-import { HStack, VStack } from "@chakra-ui/react";
-import Dashboard from "../components/Dashboard";
-import Menu from "../components/Menu";
+import { Flex } from "@chakra-ui/react";
 import Profile from "../components/Profile";
-import { motion } from "framer-motion";
+import SideMenu from "../components/SideMenu";
+import PostProject from "../components/PostProject";
+import { Route, Routes } from "react-router-dom";
+import { UserFeed } from "../components/UserFeed";
+import { ProjectDetails } from "../components/ProjectDetails";
+import MainFeed from "./MainFeed";
+import Tasks from "./Tasks";
+import PageNotFound from "./404Page";
 
 export default function Home() {
   return (
-    <HStack
-      h="full"
-      alignItems="start"
-      as={motion.div}
-      initial={{ opacity: 0, scale: 0.75 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ ease: "ease-in-out", duration: 0.5 } as object}
-    >
-      <Menu />
-      <VStack
-        alignItems="start"
-        marginX="4"
-        h="full"
-        paddingX="4"
-        paddingY="2"
-        shadow="lg"
-        borderRadius="lg"
-        w="full"
-      >
-        <Profile />
-        <Dashboard />
-      </VStack>
-    </HStack>
+    <Flex>
+      <SideMenu />
+      <Flex flex="1">
+        <Routes>
+          <Route index element={<Profile />} />
+          <Route element={<MainFeed />} path="feed" />
+          <Route element={<Profile />} path="profile" />
+          <Route element={<PostProject />} path="post-project" />
+          <Route element={<UserFeed />} path="projects" />
+          <Route element={<ProjectDetails />} path="project/:id" />
+          <Route element={<Tasks />} path="project/:id/tasks" />
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </Flex>
+    </Flex>
   );
 }

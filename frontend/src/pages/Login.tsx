@@ -9,31 +9,144 @@ import {
   Heading,
   Text,
   useColorModeValue,
-  Select,
   Link as ChakraLink,
+  Spinner,
+  useToast,
+  useDisclosure,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
 import { useNavigate, Link as ReactRouterLink } from "react-router-dom";
-import { createUser } from "../features/users/userSlice";
+import axios from "axios";
+import { useMutation } from "react-query";
+import { useCookies } from "react-cookie";
+import VerifyEmail from "./VerifyEmail";
+
+axios.defaults.withCredentials = true;
 
 export default function Login() {
-  const [userType, setUserType] = useState("");
-  const [name, setName] = useState("Nahshal Manir");
-  const [organization, setOrganization] = useState("TMSL");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("+91 1234567890");
   const [password, setPassword] = useState("");
-  const [designation, setDesignation] = useState("Professor");
 
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   const navigate = useNavigate();
+  const toast = useToast();
+  const [cookies, setCookie] = useCookies(["token"]);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function postUserData() {
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/api/user/login",
+        {
+          email,
+          password,
+        }
+      );
+      if (response.status === 200) {
+        return response.data.data;
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (error) {
+      toast({
+        title: "Error logging in",
+        description: error.response.data.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+      throw new Error("Error logging in");
+    }
+  }
+
+  const { mutate, isLoading, isSuccess } = useMutation(postUserData, {
+    onSuccess: (data) => {
+      const { token } = data;
+      setCookie("token", token, { path: "/" });
+      toast({
+        title: "Successful",
+        description: "Logged in successfully",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+
+      navigate("/app/profile", { state: { isAuthenticated: true } });
+    },
+  });
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    dispatch(
-      createUser(name, email, userType, designation, organization, phone)
+    try {
+      mutate();
+    } catch (error) {
+      console.error("mutate error");
+    }
+  }
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [verifyMail, setVerifyMail] = useState("");
+
+  const { mutateAsync: mutateVerifyEmail } = useMutation(
+    async () => {
+      const email = verifyMail;
+      console.log(email);
+      return await axios.post("http://localhost:4000/api/user/forgotpassword", {
+        email,
+      });
+    },
+    {
+      onSuccess: (data) => {
+        toast({
+          title: "Success",
+          description: `${data.data.message}`,
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: `${error?.response?.data?.message}. Could not send email`,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+      },
+    }
+  );
+
+  const handleVerifyEmailClick = () => {
+    mutateVerifyEmail();
+    setVerifyMail("");
+    onClose();
+  };
+
+  if (isLoading) {
+    return (
+      <Spinner
+        thickness="4px"
+        speed="0.65s"
+        emptyColor="gray.200"
+        color="blue.500"
+        size="xl"
+      />
     );
+  }
+
+  // console.log(isSuccess);
+  if (isSuccess) {
     navigate("/app");
   }
 
@@ -52,23 +165,13 @@ export default function Login() {
         </Flex>
         <Box
           rounded={"lg"}
+          // eslint-disable-next-line react-hooks/rules-of-hooks
           bg={useColorModeValue("white", "gray.700")}
           boxShadow={"lg"}
           p={8}
         >
           <form onSubmit={handleSubmit}>
             <Stack spacing={4}>
-              <FormControl id="user-type" isRequired>
-                <FormLabel>User Type</FormLabel>
-                <Select
-                  placeholder="Select User Type"
-                  value={userType}
-                  onChange={(e) => setUserType(e.target.value)}
-                >
-                  <option value="reasearcher">Researcher</option>
-                  <option value="collaborator">Collaborator</option>
-                </Select>
-              </FormControl>
               <FormControl id="email" isRequired>
                 <FormLabel>Email address</FormLabel>
                 <Input
@@ -84,17 +187,19 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <Text
+                  mt={3}
+                  color="blue.500"
+                  cursor="pointer"
+                  textDecoration="underline"
+                  onClick={onOpen}
+                >
+                  Forgot Password?
+                </Text>
               </FormControl>
               <Stack marginTop="8" spacing={4}>
                 <Stack>
-                  <Button
-                    type="submit"
-                    bg={"blue.400"}
-                    color={"white"}
-                    _hover={{
-                      bg: "blue.500",
-                    }}
-                  >
+                  <Button type="submit" colorScheme="blue">
                     Sign in
                   </Button>
                 </Stack>
@@ -114,6 +219,35 @@ export default function Login() {
           </form>
         </Box>
       </Stack>
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Verify Email</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <form onSubmit={handleSubmit}>
+              <Stack spacing={4}>
+                <FormControl id="email" isRequired>
+                  <FormLabel>Enter your registered Email id</FormLabel>
+                  <Input
+                    type="email"
+                    value={verifyMail}
+                    onChange={(e) => setVerifyMail(e.target.value)}
+                  />
+                </FormControl>
+              </Stack>
+            </form>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={handleVerifyEmailClick}>
+              Send Reset Link
+            </Button>
+            <Button variant="ghost" onClick={onClose}>
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Flex>
   );
 }

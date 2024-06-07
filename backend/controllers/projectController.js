@@ -22,9 +22,9 @@ const {
 // Get all projects on public feed
 exports.getAllProjects = catchAsyncErrors(async (req, res, next) => {
   const publicProjects = await Project.find({
-    $or:[
+    $or: [
       { endDate: { $lt: new Date() } },
-      { menteesRequired : { $gt: 0 } }
+      { menteesRequired: { $gt: 0 } }
     ]
   });
   res.status(201).json(new ApiResponse(201, publicProjects));
@@ -34,21 +34,22 @@ exports.getAllProjects = catchAsyncErrors(async (req, res, next) => {
 exports.createProject = catchAsyncErrors(async (req, res, next) => {
   const mentor = req.user.id;
   const mentorAddress = req.user.ethAddress;
+
   let project;
-  
+
   try {
-    
-    let orgId=req.body.organization.id;
-    if(orgId==null){
-      let org=await Organization.create({
+
+    let orgId = req.body.organization.id;
+    if (orgId == null) {
+      let org = await Organization.create({
         name: req.body.organization.name,
         email: req.body.organization.email,
         address: req.body.organization.address
       });
-      
-      orgId=org._id;
+
+      orgId = org._id;
     }
-    
+
     project = await Project.create({
       mentor,
       organization: orgId,
@@ -60,7 +61,7 @@ exports.createProject = catchAsyncErrors(async (req, res, next) => {
       startDate: req.body.startDate,
       endDate: req.body.endDate
     });
-    
+
     await createProject(project._id.toString(), mentorAddress);
     // const grpMembers=new Array(project.mentor);
     // const groupChat = await Chat.create({
@@ -264,12 +265,12 @@ exports.addTask = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Project not found", 400));
   }
 
-  if(req.user.id!=project.mentor){
-    return next(new ErrorHander("You are not authorized to access this page",403));
+  if (req.user.id != project.mentor) {
+    return next(new ErrorHander("You are not authorized to access this page", 403));
   }
 
-  if(req.body.token<=0 || req.body.token>project.token){
-    return next(new ErrorHander("Invalid Token Count",403));
+  if (req.body.token <= 0 || req.body.token > project.token) {
+    return next(new ErrorHander("Invalid Token Count", 403));
   }
   
   let taskId = projectId + project.tasks.length;
@@ -333,19 +334,22 @@ exports.modifyTask = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("You are not authorized to access this page",403));
   }
 
-  if(req.body.token!=undefined && req.body.token<=0){
-    return next(new ErrorHander("Invalid Token Count",403));
-  }
-  
   let taskId = req.body.taskId;
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
   
-  if(req.body.token > project.tasks[taskIndex].token && (req.body.token - project.tasks[taskIndex].token)<=project.token)
-    project.tasks[taskIndex].token=req.body.token;
-  else if(req.body.token < project.tasks[taskIndex].token){
-    project.token += project.tasks[taskIndex].token - req.body.token;
-    project.tasks[taskIndex].token=req.body.token;
+  if(req.body.token!="" && req.body.token<=0){
+    return next(new ErrorHander("Invalid Token Count",403));
+  }else if(req.body.token!=""){
+    if(req.body.token > project.tasks[taskIndex].token && (req.body.token - project.tasks[taskIndex].token)<=project.token)
+      project.tasks[taskIndex].token=req.body.token;
+    else if(req.body.token < project.tasks[taskIndex].token){
+      project.token += project.tasks[taskIndex].token - req.body.token;
+      project.tasks[taskIndex].token=req.body.token;
+    }
   }
+  
+  
+  
   
   if(req.body.description)
     project.tasks[taskIndex].description=req.body.description;
@@ -378,22 +382,22 @@ exports.addTaskContributor = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHander("Mentee not found", 400));
   }
 
-  if(req.user.id!=project.mentor){
-    return next(new ErrorHander("You are not authorized to access this page",403));
+  if (req.user.id != project.mentor) {
+    return next(new ErrorHander("You are not authorized to access this page", 403));
   }
-  
+
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
   project.tasks[taskIndex].menteesAssigned.push(userId);
-  
-  const menteeId=project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
-  
+
+  const menteeId = project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
+
   project.menteesApproved[menteeId].assignedTaskIds.push(taskId);
   if (project.tasks[taskIndex].taskStatus === 'pending')
     project.tasks[taskIndex].taskStatus = 'active';
 
   const mentorAddress = req.user.ethAddress;
 
-  try{
+  try {
     await assignUser(projectId, taskId, mentee.ethAddress, mentorAddress);
     await project.save();
 
@@ -405,7 +409,7 @@ exports.addTaskContributor = catchAsyncErrors(async (req, res, next) => {
 
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
     return res.status(201).json(new ApiResponse(201, project, "Task assigned successfully"));
-  }catch(error){
+  } catch (error) {
     return next(new ErrorHander("Server Error", 500));
   }
 });
@@ -429,19 +433,19 @@ exports.removeTaskContributor = catchAsyncErrors(async (req, res, next) => {
   if(req.user.id!=project.mentor){
     return next(new ErrorHander("You are not authorized to access this page",403));
   }
-  
+
   const mentorAddress = req.user.ethAddress;
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
-  
+
   project.tasks[taskIndex].menteesAssigned = project.tasks[taskIndex].menteesAssigned.filter(mentee => { mentee.user !== userId })
-  
-  const menteeId=project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
+
+  const menteeId = project.menteesApproved.findIndex(currMentee => currMentee.user == userId)
   project.menteesApproved[menteeId].assignedTaskIds = project.menteesApproved[menteeId].assignedTaskIds.filter(taskID => { taskID !== taskId })
-  
+
   if (project.tasks[taskIndex].menteesAssigned.length === 0)
     project.tasks[taskIndex].taskStatus = 'pending';
 
-  try{
+  try {
     await removeUser(projectId, taskId, mentee.ethAddress, mentorAddress);
     await project.save();
 
@@ -454,7 +458,7 @@ exports.removeTaskContributor = catchAsyncErrors(async (req, res, next) => {
     await project.populate('mentor organization menteesApplication.user menteesApproved.user tasks.menteesAssigned', 'name email');
 
     return res.status(201).json(new ApiResponse(201, project, "Task unassigned"));
-  }catch(error){
+  } catch (error) {
     return next(new ErrorHander("Server Error", 500));
   }
 });
@@ -472,7 +476,7 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
   const mentor = await User.findById(project.mentor);
 
   const taskIndex = project.tasks.findIndex(currTask => currTask.id == taskId);
-  if(project.tasks[taskIndex].menteesAssigned.findIndex(currMentee => currMentee == req.user.id) == -1) {
+  if (project.tasks[taskIndex].menteesAssigned.findIndex(currMentee => currMentee == req.user.id) == -1) {
     return next(new ErrorHander("You are not authorized to access this page", 403));
   }
 
@@ -498,7 +502,7 @@ exports.uploadTaskWork = catchAsyncErrors(async (req, res, next) => {
 
     try {
       await new Promise((resolve, reject) => {
-        file.mv(filepath + filename, function(err) {
+        file.mv(filepath + filename, function (err) {
           if (err) {
             return reject(new ErrorHander("Upload failed", 401));
           }
@@ -534,7 +538,7 @@ exports.getAssignedTasks = catchAsyncErrors(async (req, res, next) => {
   const menteeTasks = mentee.assignedTaskIds.map(taskId => {
     return project.tasks.find(ele => ele.id === taskId)
   })
-  
+
   return res.status(201).json(new ApiResponse(201, menteeTasks, "Tasks retrieved"));
 });
 
@@ -602,7 +606,7 @@ exports.reviewTask = catchAsyncErrors(async (req, res, next) => {
 
     const directoryPath = path.join(__dirname, `../uploads/${projectId}/${taskId}/mentee`);
     const files = await fs.promises.readdir(directoryPath);
-    
+
     const zip = archiver('zip', { zlib: { level: 9 } }); // Sets the compression level.
     zip.on('error', err => { throw err; });
 
@@ -610,8 +614,8 @@ exports.reviewTask = catchAsyncErrors(async (req, res, next) => {
     zip.pipe(res);
 
     files.forEach(file => {
-        const filePath = path.join(directoryPath, file);
-        zip.file(filePath, { name: file });
+      const filePath = path.join(directoryPath, file);
+      zip.file(filePath, { name: file });
     });
 
     zip.finalize();

@@ -2,7 +2,7 @@ const ErrorHander = require("../utils/errorhander");
 const ApiResponse = require("../utils/ApiResponse");
 const catchAsyncErrors = require("../middleware/catchAsyncError");
 const User = require("../models/userModel");
-const Organization=require("../models/organizationModel");
+const Organization = require("../models/organizationModel");
 const sendToken = require("../utils/jwtToken");
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
@@ -11,10 +11,10 @@ const fs = require('fs').promises;
 
 // Register a User
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
-    const userExists = await User.findOne({email: req.body.email});
-    
-    if(!userExists){
-        let org = await Organization.findOne({email: req.body.organization.email});
+    const userExists = await User.findOne({ email: req.body.email });
+
+    if (!userExists) {
+        let org = await Organization.findOne({ email: req.body.organization.email });
         if (!org) {
             org = await Organization.create({
                 name: req.body.organization.name,
@@ -22,9 +22,9 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
                 address: req.body.organization.address
             });
         }
-        
+
         let orgId = org._id;
-        req.body.organization={
+        req.body.organization = {
             organization_details: orgId,
             designation: req.body.organization.designation
         }
@@ -32,16 +32,16 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
             ...req.body,
         });
 
-        await user.populate('projects_saved projects_ongoing projects_completed','title description');
+        await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
         await user.populate('organization.organization_details')
-        
+
         await sendEmail({
             email: user.email,
             subject: `Collabchain | Account Registration`,
             message: `You have successfully registered on our platform Collabchain.`,
-          });
+        });
         sendToken(user, 201, res);
-    }else{
+    } else {
         return next(new ErrorHander("User Already exists", 400));
     }
 });
@@ -68,14 +68,8 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHander("Invalid email or password", 401));
     }
 
-    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
-    
-    await sendEmail({
-        email: user.email,
-        subject: `Collabchain | Account Login`,
-        message: `We have recieved a new login from your account.`,
-      });
 
     sendToken(user, 200, res);
 });
@@ -104,7 +98,10 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
     const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
 
-    const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
+    // const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
+    const resetPasswordUrl = `${req.protocol}://localhost:5173/password/reset/${resetToken}`;
+    const message = `Your password reset url is :- \n\n ${resetPasswordUrl} \n\nIf you have not requested this email then, please ignore it.`;
+
     try {
         await sendEmail({
             email: user.email,
@@ -137,7 +134,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     });
 
     if (!user) {
-        return next(new ErrorHander("Reset Password Token is invalid or has been expired",400));
+        return next(new ErrorHander("Reset Password Token is invalid or has been expired", 400));
     }
 
     if (req.body.password !== req.body.confirmPassword) {
@@ -152,10 +149,10 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
         email: user.email,
         subject: `Collabchain | Password Reset`,
         message: `You have successfully reset your account password.`,
-      });
+    });
     await user.save();
 
-    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
 
     sendToken(user, 200, res);
@@ -164,12 +161,12 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 // Get User Details
 exports.getUser = catchAsyncErrors(async (req, res, next) => {
     const userid = req.params.userid;
-    const user = await User.findById(userid, {verifyEmailStatus: 0, aadhar: 0, ethAddress: 0, password: 0, token: 0, projects_applied: 0, projects_ongoing: 0, projects_saved: 0});
+    const user = await User.findById(userid, { verifyEmailStatus: 0, aadhar: 0, ethAddress: 0, password: 0, token: 0, projects_applied: 0, projects_ongoing: 0, projects_saved: 0 });
 
-    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details');
 
-    if(!user){
+    if (!user) {
         return next(new ErrorHander("User not found", 400));
     } else {
         res.status(200).json(new ApiResponse(200, user));
@@ -179,13 +176,12 @@ exports.getUser = catchAsyncErrors(async (req, res, next) => {
 // Get Logged-In User Detail
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user.id);
-
-    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
 
-    if(!user){
+    if (!user) {
         return next(new ErrorHander("User not found", 400));
-    }else{
+    } else {
         res.status(200).json(new ApiResponse(200, user));
     }
 });
@@ -195,9 +191,9 @@ exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user.id).select("+password");
 
     if (!user) {
-        return next(new ErrorHander("Reset Password Token is invalid or has been expired",400));
+        return next(new ErrorHander("Reset Password Token is invalid or has been expired", 400));
     }
-    
+
     const isPasswordMatched = await user.comparePassword(req.body.oldPassword);
 
     if (!isPasswordMatched) {
@@ -211,7 +207,7 @@ exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
     user.password = req.body.newPassword;
     await user.save();
 
-    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
 
     sendToken(user, 200, res);
@@ -219,8 +215,8 @@ exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
 
 // update User Profile
 exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
-    if(req.body.organization) {
-        let org = await Organization.findOne({email: req.body.organization.email});
+    if (req.body.organization) {
+        let org = await Organization.findOne({ email: req.body.organization.email });
         if (!org) {
             org = await Organization.create({
                 name: req.body.organization.name,
@@ -230,7 +226,7 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
         }
 
         let orgId = org._id;
-        req.body.organization={
+        req.body.organization = {
             organization_details: orgId,
             designation: req.body.organization.designation
         }
@@ -241,9 +237,9 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
         useFindAndModify: false,
     });
 
-    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
-    
+
     res.status(200).json(new ApiResponse(200, user));
 });
 
@@ -256,14 +252,17 @@ exports.sendVerificationEmail = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHander("User not found", 404));
     }
 
-    if(user.verifyEmailStatus) {
+    if (user.verifyEmailStatus) {
         return next(new ErrorHander("Your email is already verified", 401));
     }
 
     const verificationToken = user.getEmailVerificationToken();
     await user.save({ validateBeforeSave: false });
 
-    const verificationUrl = `${req.protocol}://${req.get("host")}/verifymail/${verificationToken}`;
+    // const verificationUrl = `${req.protocol}://${req.get("host")}/verifymail/${verificationToken}`;
+    const verificationUrl = `${req.protocol}://localhost:5173/verifymail/${verificationToken}`;
+    const message = `Your email verification url is :- \n\n ${verificationUrl} \n\nIf you have not requested this email then, please ignore it.`;
+
     try {
         await sendEmail({
             email: user.email,
@@ -296,7 +295,7 @@ exports.verifyEmail = catchAsyncErrors(async (req, res, next) => {
     });
 
     if (!user) {
-        return next(new ErrorHander("Email verification token is invalid or has been expired",400));
+        return next(new ErrorHander("Email verification token is invalid or has been expired", 400));
     }
 
     user.verifyEmailStatus = true;
@@ -305,7 +304,7 @@ exports.verifyEmail = catchAsyncErrors(async (req, res, next) => {
 
     await user.save();
 
-    await user.populate('projects_saved projects_ongoing projects_completed','title description');
+    await user.populate('projects_saved projects_ongoing projects_completed', 'title description');
     await user.populate('organization.organization_details')
 
     sendToken(user, 200, res);
@@ -316,28 +315,28 @@ exports.uploadFile = catchAsyncErrors(async (req, res, next) => {
     const filetype = req.params.filetype;
     const userId = req.params.userid;
     const user = await User.findById(userId);
-  
+
     if (!user) {
-      return next(new ErrorHander("User not found", 400));
+        return next(new ErrorHander("User not found", 400));
     }
-  
+
     const file = req.files.file;
-    
-    file.mv(`./uploads/${filetype}/${userId}.${file.mimetype.substring(file.mimetype.lastIndexOf('/')+1)}`, function(err){
-      if (err) {
-        return next(new ErrorHander("Upload failed", 401));
-      }else{
-        return res.status(201).json(new ApiResponse(201, null, "upload successful"));
-      }
+
+    file.mv(`./uploads/${filetype}/${userId}.${file.mimetype.substring(file.mimetype.lastIndexOf('/') + 1)}`, function (err) {
+        if (err) {
+            return next(new ErrorHander("Upload failed", 401));
+        } else {
+            return res.status(201).json(new ApiResponse(201, null, "upload successful"));
+        }
     })
-  });
+});
 
 exports.getFile = catchAsyncErrors(async (req, res, next) => {
     const filetype = req.params.filetype;
     let userId = req.params.userid;
-    if(userId.lastIndexOf('.') != -1)
+    if (userId.lastIndexOf('.') != -1)
         userId = userId.substring(0, userId.lastIndexOf('.'));
-    
+
     const user = await User.findById(userId);
 
     if (!user) {
@@ -349,9 +348,9 @@ exports.getFile = catchAsyncErrors(async (req, res, next) => {
     try {
         const files = await fs.readdir(directoryPath);
         let file = files.find(f => path.parse(f).name === userId);
-        
+
         if (!file) {
-            file = files.find(f =>path.parse(f).name === "default");
+            file = files.find(f => path.parse(f).name === "default");
         }
 
         const filePath = path.join(directoryPath, file);
